@@ -1,0 +1,13 @@
+# Ignore these files
+
+*.gignore
+
+# emacs backups
+*~
+
+# mac stuff
+*.DS_Store
+
+# other
+ssl
+dump

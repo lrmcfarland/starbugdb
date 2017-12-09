@@ -1,0 +1,37 @@
+# mongodb
+#
+# persistent storage:  docker volume create starbug-data
+#
+# to build:            docker build -f Dockerfile.mongodb -t starbugdb .
+#
+# to run:              docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
+
+# to run with auth:    docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb --auth
+#
+# docker mongo shell:  docker exec -it starbugdb-00 mongo admin
+# docker bash  shell:  docker exec -it starbugdb-00 bash
+#
+# after initial user is added (TODO in script with out auth error?)
+#
+# to initialzie starbug: mongo admin starbugdb-init.js -u admin -p changeme --authenticationDatabase admin
+#
+# after auth by starbug-init.js
+# docker mongo shell:  docker exec -it starbugdb-00 mongo admin -u admin -p changeme --authenticationDatabase admin
+#
+# with port 27017 this is also accessible from the host with the mongo client
+#
+# mongo host client:   mongo starbug -u starbug -p changemetoo --authenticationDatabase starbug
+#
+# after root user is added
+#
+# mongodump -u root -p changem3 --out ./starbug-2017-11-08
+# mongorestore -u root -p changem3 --drop ./starbug-2017-11-08/
+#
+
+FROM mongo
+
+LABEL maintainer "lrm@starbug.com"
+LABEL service "Starbug.com mongo database"
+
+# TODO run starbug-init here?
+# TODO CMD [ "mongod", "--storageEngine", "$STORAGE_ENGINE" "--httpinterface", "--rest", "--master", "--smallfiles" ]

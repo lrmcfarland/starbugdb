@@ -1,0 +1,59 @@
+{
+  "admin": {
+    "db": "admin",
+    "comment": "assumed to have been added manually in the mongo shell before the others",
+    "create_args": {
+      "user": "admin",
+      "pwd": "changeme",
+      "roles": [
+	{
+	  "role": "userAdminAnyDatabase",
+	  "db": "admin"
+	}
+      ]
+    }
+  },
+  "root": {
+    "db": "admin",
+    "create_args": {
+      "user": "root",
+      "pwd": "changemetoo",
+      "roles": [
+	{
+	  "role": "root",
+	  "db": "admin"
+	}
+      ]
+    }
+  },
+  "starbug": {
+    "db": "starbug",
+    "create_args": {
+      "user": "starbug",
+      "pwd": "changeme3",
+      "roles": [
+	{
+	  "role": "dbAdmin",
+	  "db": "starbug"
+	},
+	{
+	  "role": "readWrite",
+	  "db": "starbug"
+	}
+      ]
+    }
+  },
+  "guest": {
+    "db": "starbug",
+    "create_args": {
+      "user": "guest",
+      "pwd": "guest",
+      "roles": [
+	{
+	  "role": "read",
+	  "db": "starbug"
+	}
+      ]
+    }
+  }
+}
