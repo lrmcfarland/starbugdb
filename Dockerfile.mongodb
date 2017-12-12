@@ -11,14 +11,19 @@
 # docker mongo shell:  docker exec -it starbugdb-00 mongo admin
 # docker bash  shell:  docker exec -it starbugdb-00 bash
 #
-# after initial user is added (TODO in script with out auth error?)
+# add initial user from mongo shell (OK with --auth on initial start up) (TODO script this)
+# > db.createUser({ user: 'admin', pwd: 'changeme', roles: [ { role: 'userAdminAnyDatabase', db: 'admin' } ] });
 #
-# to initialzie starbug: mongo admin starbugdb-init.js -u admin -p changeme --authenticationDatabase admin
+# to change passwords:
+# > db.changeUserPassword("<user>", "<new password>")
 #
-# after auth by starbug-init.js
+# after auth:
 # docker mongo shell:  docker exec -it starbugdb-00 mongo admin -u admin -p changeme --authenticationDatabase admin
 #
-# with port 27017 this is also accessible from the host with the mongo client
+# with port 27017 exposed this is also accessible from the host with the mongo client
+#
+# add starbug users:   cd src
+#                      mongo admin add_users.js -u admin -p changeme --authenticationDatabase admin
 #
 # mongo host client:   mongo starbug -u starbug -p changemetoo --authenticationDatabase starbug
 #
