@@ -23,9 +23,9 @@
 # with port 27017 exposed this is also accessible from the host with the mongo client
 #
 # add starbug users:   cd src
-#                      mongo admin add_users.js -u admin -p changeme --authenticationDatabase admin
+#                      mongo admin -u admin -p changeme --authenticationDatabase admin add_users.js
 #
-# mongo host client:   mongo starbug -u starbug -p changemetoo --authenticationDatabase starbug
+# mongo host client:   mongo starbug -u starbug -p changeme3 --authenticationDatabase starbug
 #
 # after root user is added
 #

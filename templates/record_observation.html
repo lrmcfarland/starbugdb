@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}Record Observation{% endblock %}
+
+{% block scripts %}
+
+  <script type="text/javascript">
+
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+    {# ----------------- #}
+    {# ----- ready ----- #}
+    {# ----------------- #}
+
+    $(document).ready(function() {
+
+      {# ----- record observation ----- #}
+
+      $("#record_observation").click(function(e) {
+
+	$.getJSON($SCRIPT_ROOT + "/api/v1/record_observation",
+	  {
+	    latitude: $('input[name="latitude"]').val(),
+	    longitude: $('input[name="longitude"]').val(),
+	    date: $('input[name="date"]').val(),
+	    time: $('input[name="time"]').val(),
+	    timezone: $('input[name="timezone"]').val(),
+	    dst: $("#_dst").is(':checked'), {# jQuery selector #}
+
+	    target_name: $('input[name="TargetName"]').val(),
+	    ra: $('input[name="RightAscension"]').val(),
+	    dec: $('input[name="Declination"]').val(),
+	    notes: $('textarea[name="Notes"]').val()
+
+	  },
+	  function(record_result) {
+
+	    if ("error" in record_result) {
+	      alert("Error: " + record_result.error);
+	    };
+
+            {# TODO clear RA and dec for next, dont add blanks, db require fields? #}
+
+	  }); {# end getJSON #}
+
+
+	return false;
+
+      }); {# end record observation click #}
+
+
+    }); {# end ready method #}
+
+
+  </script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+
+button#record_observation {
+
+    text-align: center;
+
+    font-size: 100%;
+    font-weight: bold;
+
+    margin: 0 auto;
+    display: block;
+
+    width: 600px;
+    height: 50px;
+
+    border-radius: 15%;
+
+    color:yellow;
+    background: #229922;
+}
+
+</style>
+
+
+<h1>Record Observation</h1>
+
+<br>
+
+{% include "observer_location.html" %}
+
+<br>
+
+
+<br>
+<div class="targetbox">
+
+  <table id="targets_direction">
+
+    <tr>
+      <th>
+	Target
+      <th>
+    </tr>
+
+    <tr>
+      <th>
+	Name
+      </th>
+
+      <td>
+	<input type="text" id="_target_name" name="TargetName">
+      </td>
+
+      <td colspan="2">Jupiter, Saturn et al.</td>
+
+    </tr>
+
+    <tr>
+      <th>
+	Coordinates
+      <th>
+    </tr>
+
+    <tr>
+      <td colspan="2">
+	<a href="https://en.wikipedia.org/wiki/Equatorial_coordinate_system">Equatorial Coordinates</a>
+      </td>
+    </tr>
+
+    <tr>
+      <th>
+	<a href="https://en.wikipedia.org/wiki/Right_ascension">Right Ascension</a>
+      </th>
+
+      <td>
+	<input type="text" id="_right_ascension" name="RightAscension">
+      </td>
+
+      <td>hour[:min[:sec]]</td>
+
+      <th>
+	<a href="https://en.wikipedia.org/wiki/Declination">Declination</a>
+      </th>
+
+      <td>
+	<input type="text" id="_declination" name="Declination">
+      </td>
+
+      <td>deg[:min[:sec]]</td>
+
+    </tr>
+
+    <tr>
+      <td colsapn="2">convert to button</td>
+    </tr>
+
+    <tr>
+      <td colspan="2">
+	<a href="https://en.wikipedia.org/wiki/Horizontal_coordinate_system">Horizontal Coordinates</a>
+      </td>
+    </tr>
+
+    <tr>
+    </tr>
+
+
+    <tr>
+
+      <th>
+	Azimuth
+      </th>
+
+      <td>
+	<input type="text" id="_azimuth" name="Azimuth">
+      </td>
+
+      <td>deg[:min[:sec]]</td>
+
+      <th>
+	Altitude
+      </th>
+
+      <td>
+	<input type="text" id="_altitude" name="Altitude">
+      </td>
+
+      <td>deg[:min[:sec]]</td>
+
+    </tr>
+
+    <tr>
+      <th>
+	Notes
+      </th>
+
+      <td colspan="6">
+	<textarea rows="4" cols="90" id="_notes" name="Notes"></textarea>
+      </td>
+
+    </tr>
+
+    <tr>
+      <td colspan="7">
+	<button id="record_observation">Record Observation</button>
+      </td>
+    </tr>
+
+  </table>
+
+</div>
+
+{% endblock %}
