@@ -1,0 +1,67 @@
+# This is the flask interface to the starbug.com mongodb database
+#
+# This will build the flask observation interface served by gunicorn
+# for use with nginx as a reverse proxy.
+#
+# see Dockerfile.mongodb for details about how to set that up
+#
+# one time setup
+# persistent storage:  docker volume create aai-logs
+# create network:      docker network create starbugnet
+#
+#
+# to build:            docker build -f Dockerfile.gunicorn -t obsui-gunicorn .
+#
+# to run:              docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
+#
+# to bash obsui-logs:  docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn --user root --entrypoint /bin/bash obsui-gunicorn
+#
+# to stop:                   docker stop obsui-gunicorn-00
+# to delete container:       docker rm obsui-gunicorn-00
+# to delete image:           docker rmi obsui-gunicorn
+
+FROM centos
+
+LABEL maintainer "lrm@starbug.com"
+LABEL service "Starbug mongodb observation gunicorn wrapper"
+
+RUN yum update -y
+
+RUN yum install -y epel-release && yum clean all
+RUN yum install -y python-devel python-pip && yum clean all
+
+COPY requirements.txt /tmp
+RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
+
+# -------------------------------
+# ----- OBSERVATION_UI home -----
+# -------------------------------
+
+ENV STARBUG_HOME="/opt/starbug.com/" \
+    OBSUI_HOME="/opt/starbug.com/ObsUI" \
+    STARBUG_USER="starbug" \
+    STARBUG_GRP="starbug"
+
+RUN groupadd ${STARBUG_GRP} \
+    && adduser -g ${STARBUG_GRP} ${STARBUG_USER} \
+    && mkdir -p ${STARBUG_HOME}/logs/gunicorn \
+    && mkdir -p ${OBSUI_HOME} \
+    && chown -R ${STARBUG_USER}:${STARBUG_GRP} ${STARBUG_HOME}
+
+
+USER ${STARBUG_USER}:${STARBUG_GRP}
+
+WORKDIR ${OBSUI_HOME}
+
+COPY observations_flask.py .
+COPY conf conf
+COPY src src
+COPY static static
+COPY templates templates
+
+
+CMD [ "gunicorn", "observations_flask:app", "-b", "0.0.0.0:8090", \
+      "-w", "4", "--capture-output", "--log-level", "info", \
+      "--access-logfile", "/opt/starbug.com/logs/gunicorn/obs-gunicorn-access.log", \
+      "--error-logfile",  "/opt/starbug.com/logs/gunicorn/obs-gunicorn-error.log", \
+      "--forwarded-allow-ips", "*"]
