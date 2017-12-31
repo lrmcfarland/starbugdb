@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Starbug database flask based interface
+"""Flask UI for the starbug observation database
 
 Assumes the databsae has been populated with conf/users.json
-flask also uses this to also establish it session authorization.
+
+TODO? flask also uses this to also establish it session authorization.
 
 To run:
 
@@ -77,7 +78,7 @@ import time
 # ===== globals =====
 # ===================
 
-_username_key = 'sbdb_username'
+_username_key = 'obs_username'
 
 timezone_re = re.compile('(?P<sign>.*)(?P<hours>\d\d)(?P<mins>\d\d)')
 
@@ -85,7 +86,7 @@ timezone_re = re.compile('(?P<sign>.*)(?P<hours>\d\d)(?P<mins>\d\d)')
 # TODO http://flask.pocoo.org/docs/0.12/patterns/appfactories/
 # http://flask.pocoo.org/docs/0.12/config/
 app = flask.Flask(__name__) # must be before decorators
-app.config.from_pyfile('conf/sbdb-flask.cfg') # TODO meh!
+app.config.from_pyfile('conf/obs-flask.cfg') # TODO meh!
 
 
 mongo = flask_pymongo.PyMongo(app)
@@ -100,7 +101,7 @@ mongo = flask_pymongo.PyMongo(app)
 def home():
     """Starbug database home"""
 
-    app.logger.info('sbdb_username %s', flask.session.get(_username_key, None))
+    app.logger.info('obs_username %s', flask.session.get(_username_key, None))
 
     if flask.session.get(_username_key, None) is None:
         return flask.render_template('login.html')
@@ -163,8 +164,8 @@ def info_api():
         app.logger.info('%s collections', mongo.db.name) # TODO rm
 
         app.logger.info('flask.session: %s', flask.session) # TODO rm exposes password!
-        # flask.session: <SecureCookieSession {u'sbdb_user': u'starbug',
-        # u'sbdb_username': u'guest', u'sbdb_password': u'changeme3'}>
+        # flask.session: <SecureCookieSession {u'obs_user': u'starbug',
+        # u'obs_username': u'guest', u'obs_password': u'changeme3'}>
 
         app.logger.error('users {} dir({})'.format(mongo.db.users.find(), dir(mongo.db.users.find())))
         for user in mongo.db.users.find():
@@ -204,16 +205,34 @@ def login_api():
 
     try:
 
-        app.logger.info('TODO use mongo config login to auth user user: %s', flask.request.args.get('username'))
+        app.logger.info('TODO use user table to auth: %s', flask.request.args.get('username'))
 
-        # TODO accsss users
+        # TODO use bcrypt
 
-        # TODO authenticate depreciated. create mongoclient and save in session?
-        authed = mongo.db.authenticate(flask.request.args.get('username'),
-                                       flask.request.args.get('password'),
-                                       source='starbug')
+        if False:
+
+            # TODO authenticate depreciated. create mongoclient and save in session?
+            authed = mongo.db.authenticate(flask.request.args.get('username'),
+                                           flask.request.args.get('password'),
+                                           source='starbug')
+
+        elif False:
+
+            app.logger.debug('app config %s', app.config)
+
+            # TODO why explicit? shouldn't this happen in pymongo? https://stackoverflow.com/questions/32937407/authentication-problems-with-pymongo-and-flask
+            authed = mongo.db.authenticate(app.config['OBS_USERNAME'],
+                                           app.config['OBS_PASSWORD'],
+                                           source=app.config['OBS_DBNAME'])
+
+            app.logger.debug('app config %s', app.config)
+
+        else:
+            authed = 'not tried'
+
 
         app.logger.debug('authed %s', authed)
+
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
         app.logger.error('auth error: %s', err)
@@ -232,8 +251,6 @@ def login_api():
 @app.route("/api/v1/record_observation")
 def record_observation_api():
     """TODO POST?
-
-    database is from conf/sbdb-flask.cfg
 
     http://werkzeug.pocoo.org/docs/0.12/datastructures/#werkzeug.datastructures.MultiDict.to_dict
 
