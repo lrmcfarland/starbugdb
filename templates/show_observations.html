@@ -1,0 +1,120 @@
+{% extends "base.html" %}
+
+{% block title %}Show Observations{% endblock %}
+
+{% block scripts %}
+
+  <script type="text/javascript">
+
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+    {# ----------------- #}
+    {# ----- ready ----- #}
+    {# ----------------- #}
+
+    $(document).ready(function() {
+
+      {# ----- show observations ----- #}
+
+      $("#show_observations").click(function(e) {
+
+	$.getJSON($SCRIPT_ROOT + "/api/v1/show_observations",
+	  {
+
+	    {# TODO pass in query args like notes: $('textarea[name="Notes"]').val() #}
+
+	  },
+	  function(show_result) {
+
+	    if ("error" in show_result) {
+	      alert("Error: " + show_result.error);
+	    } else {
+
+	      $("#observations").empty();
+
+	      var obs_html = '<tr><th>Name</th><th>Date</th><th>Time</th><th>Right Ascension</th><th>Declination</th><th>Notes</th></tr>';
+	      $.each(show_result["data"], function(i, item) {
+
+                obs_html += '<tr><td>'  + item.name +
+                            '</td><td>' + item.date +
+                            '</td><td>' + item.time +
+                            '</td><td align="center">' + item.ra +
+                            '</td><td align="center">' + item.dec +
+                            '</td><td>' + item.notes +
+                            '</td></tr>';
+	      });
+
+	      $("#observations").append(obs_html)
+
+	    };
+
+
+	  }); {# end getJSON #}
+
+
+	return false;
+
+      }); {# end show observations click #}
+
+
+    }); {# end ready method #}
+
+
+  </script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+.page {
+    width: 60em;
+}
+
+button#show_observations {
+
+    text-align: center;
+
+    font-size: 100%;
+    font-weight: bold;
+
+}
+
+</style>
+
+
+<h1>Observations</h1>
+
+<br>
+<div class="observationbox">
+
+  <table id="controls" align="center">
+
+    <tr>
+      <td colspan="7">
+      </td>
+    </tr>
+
+    <tr>
+      <th>
+	<button id="show_observations">Find</button>
+      <th>
+      <td>
+	<input type="text" id="_search" name="search">
+      <td>
+    </tr>
+
+  </table>
+
+  <br>
+
+  <table id="observations" align="center">
+    <tr><th>Name</th><th>Date</th><th>Time</th><th>Right Ascension</th><th>Declination</th><th>Notes</th></tr>
+  </table>
+
+
+</div>
+
+{% endblock %}

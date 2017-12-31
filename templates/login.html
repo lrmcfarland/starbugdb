@@ -1,0 +1,139 @@
+{% extends "base.html" %}
+
+{% block title %}Starbug Database Login{% endblock %}
+
+{% block scripts %}
+
+  <script type="text/javascript">
+
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+    function authenticate() {
+
+      {# TODO POST? #}
+      $.getJSON($SCRIPT_ROOT + "/api/v1/login",
+	{
+	  username: $('input[name="username"]').val(),
+	  password: $('input[name="password"]').val(),
+	},
+	function(record_result) {
+
+	  if ("error" in record_result) {
+
+	    alert("Error: " + record_result.error);
+
+	      window.location.assign("/login");
+
+	  } else {
+
+	    window.location.assign("/");
+
+	  };
+      }); {# end getJSON #}
+
+    }; {# end authenticate #}
+
+    {# ----------------- #}
+    {# ----- ready ----- #}
+    {# ----------------- #}
+
+    $(document).ready(function() {
+
+      {# ----- login button ----- #}
+
+      $("#authenticate_login").click(function(e) {
+
+	authenticate();
+	return false;
+
+      }); {# end record observation click #}
+
+
+    }); {# end ready method #}
+
+    {# ----- entry key ----- #}
+    $(document).keypress(function(e) {
+    var keycode = (e.keyCode ? e.keyCode : e.which);
+      if (keycode == '13') {
+	authenticate();
+      }
+
+    }); {# end entry key #}
+
+
+  </script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+button#authenticate_login {
+
+    text-align: center;
+
+    font-size: 100%;
+    font-weight: bold;
+
+    margin:  0 auto;
+    display: block;
+
+    width:  220px;
+    height: 40px;
+
+    border-radius: 50%;
+
+    color:red;
+    background: #99ee99;
+}
+
+</style>
+
+
+<h1 align="center">Login to the Starbug Mongo Database</h1>
+
+
+<div class="loginbox">
+
+  <br>
+
+  <table id="login_credentials" align="center">
+
+    <tr>
+      <th>
+	Username
+      </th>
+
+      <td>
+	<input type="text" id="_username" name="username">
+      </td>
+
+    </tr>
+
+    <tr>
+      <th>
+	Password
+      </th>
+
+      <td>
+	<input type="password" id="_password" name="password">
+      </td>
+
+    </tr>
+
+    <tr></tr>
+
+    <tr>
+      <td colspan="2">
+	<button id="authenticate_login">Login</button>
+      </td>
+    </tr>
+
+  </table>
+
+</div>
+
+
+{% endblock %}

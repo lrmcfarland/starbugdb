@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}Starbug Database Logout{% endblock %}
+
+{% block scripts %}
+
+  <script type="text/javascript">
+
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+    {# ----------------- #}
+    {# ----- ready ----- #}
+    {# ----------------- #}
+
+    $(document).ready(function() {
+
+      $.getJSON($SCRIPT_ROOT + "/api/v1/logout",
+        {},
+        function(result) {
+
+          if ("error" in result) {
+            alert("Error: " + result.error);
+          };
+
+        }); {# end getJSON #}
+
+
+    }); {# end ready method #}
+
+
+  </script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+</style>
+
+<div>
+<h1 align="center">Logged out of Starbug Mongo Database</h1>
+</div>
+
+
+{% endblock %}

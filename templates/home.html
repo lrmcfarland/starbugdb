@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Starbug Mongo Database{% endblock %}
+
+{% block scripts %}
+
+  <script type="text/javascript">
+
+    $SCRIPT_ROOT = {{ request.script_root|tojson|safe }};
+
+    {# ----------------- #}
+    {# ----- ready ----- #}
+    {# ----------------- #}
+
+    $(document).ready(function() {
+
+      $("#record_observation").click(function(e) {
+
+	window.location.assign("/record_observation");
+
+      }); {# end record observation click #}
+
+
+      $("#show_observations").click(function(e) {
+
+	window.location.assign("/show_observations");
+
+      }); {# end show_observations click #}
+
+
+      $("#logout").click(function(e) {
+
+	window.location.assign("/logout");
+
+      }); {# end logout click #}
+
+
+
+    }); {# end ready method #}
+
+
+  </script>
+
+{% endblock %}
+
+
+{% block content %}
+
+<style>
+
+
+</style>
+
+
+<h1>Starbug Mongo Database</h1>
+
+<div>
+
+  <p>
+    record and show observations
+  </p>
+
+</div>
+
+<div class="sbdbbox">
+
+  <table id="sdbd_choices" align="center">
+
+    <tr>
+      <td>
+	<button id="record_observation">Record Observation</button>
+      </td>
+
+    </tr>
+
+    <tr>
+      <td>
+	<button id="show_observations">Show Observations</button>
+      </td>
+
+    </tr>
+
+    <tr>
+      <td>
+	<button id="logout">Logout</button>
+      </td>
+
+    </tr>
+
+  </table>
+
+</div>
+
+
+{% endblock %}
