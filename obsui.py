@@ -57,25 +57,22 @@ import time
 # ===== globals =====
 # ===================
 
-_username_key = 'obs_username'
+_user_session_key = 'username'
 
 timezone_re = re.compile('(?P<sign>.*)(?P<hours>\d\d)(?P<mins>\d\d)')
 
-
 # TODO http://flask.pocoo.org/docs/0.12/patterns/appfactories/
 # http://flask.pocoo.org/docs/0.12/config/
+
 app = flask.Flask(__name__) # must be before decorators
-
-app.config.from_pyfile('conf/obs-flask.cfg') # TODO meh!
-
-app.logger.error('config {}'.format(app.config)) # TODO
-
+app.config.from_pyfile('conf/obs-flask.cfg') # TODO hardcoded meh!
 mongo = flask_pymongo.PyMongo(app)
 
 
 # ===============
 # ===== app =====
 # ===============
+
 
 class Error(Exception):
     pass
@@ -85,9 +82,9 @@ class Error(Exception):
 def home():
     """Starbug observations home"""
 
-    app.logger.info('obs_username %s', flask.session.get(_username_key, None))
+    app.logger.info('obs_username %s', flask.session.get(_user_session_key, None))
 
-    if flask.session.get(_username_key, None) is None:
+    if flask.session.get(_user_session_key, None) is None:
         return flask.render_template('login.html')
     else:
         return flask.render_template('home.html')
@@ -105,10 +102,9 @@ def logout():
     """logout page"""
 
     try:
-        mongo.db.logout()
-        flask.session.pop(_username_key)
+        flask.session.pop(_user_session_key)
     except KeyError as err:
-        app.logger.error('logout missing session name %s', err)
+        app.logger.error('logout missing session key %s', err)
 
     return flask.redirect('/')
 
@@ -116,14 +112,12 @@ def logout():
 @app.route("/record_observation")
 def record_observation():
     """Application's home"""
-
     return flask.render_template('record_observation.html')
 
 
 @app.route("/show_observations")
 def show_observations():
     """Application's home"""
-
     return flask.render_template('show_observations.html')
 
 
@@ -188,24 +182,26 @@ def login_api():
 
     try:
 
-        app.logger.info('TODO use user table to auth: %s', flask.request.args.get('username'))
+        sbdb = mongo.db['users']
 
-        users = mongo.db['users']
+        found = sbdb.find({'username': flask.request.args.get('username')})
 
-        found = users.find({'name': flask.request.args.get('username')})
+        if found.count() == 0:
+            raise Error('user "{}" does not exist'.format(flask.request.args.get('username')))
 
-        if found.count():
-            raise Error('user {} already exists'.format(args.username))
+        if found.count() > 1:
+            raise Error('user "{}" exists multiple times'.format(flask.request.args.get('username')))
 
-        for user in users.find():
-            app.logger.error('user: {}'.format(user)) # TODO rm
-
-        flask.session[_username_key] = flask.request.args.get('username') # TODO user object
+        a_user = found.next()
 
         # TODO use bcrypt
+        if a_user['password'] != flask.request.args.get('password'):
+            raise Error('authentication failed')
 
+        flask.session[_user_session_key] = {'username': a_user['username'],
+                                            'write': a_user['write']} # omit mongo id: is not JSON serializable
 
-    except (Error, flask_pymongo.pymongo.errors.OperationFailure) as err:
+    except (Error, KeyError, flask_pymongo.pymongo.errors.OperationFailure) as err:
         app.logger.error('login error: %s', err)
         result['error'] = str(err)
         return flask.jsonify(**result)
@@ -257,13 +253,18 @@ def record_observation_api():
         obs['datetime'] = obs_datetime
 
         obsdb = mongo.db['observations']
+
+        # TODO use mongodb roles?
+        if not flask.session[_user_session_key]['write']:
+            raise Error('user {} does not have write permission'.format(flask.session[_user_session_key]['username']))
+
         res = obsdb.insert(obs)
 
         result['status'] = 'success %s' % res # TODO meh
         app.logger.error('result: %s', res)
 
-    except ValueError as err:
-        result['error'] = 'ValueError: {}.'.format(err)
+    except (Error, ValueError) as err:
+        result['error'] = 'Error: {}.'.format(err)
         app.logger.error(result['error'])
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
