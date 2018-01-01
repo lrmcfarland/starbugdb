@@ -10,7 +10,7 @@
 # create network:      docker network create starbugnet
 #
 #
-# to build:            docker build -f Dockerfile.gunicorn -t obsui-gunicorn .
+# to build:            docker build -f Dockerfile.obsui -t obsui-gunicorn .
 #
 # to run:              docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
 #
@@ -53,15 +53,15 @@ USER ${STARBUG_USER}:${STARBUG_GRP}
 
 WORKDIR ${OBSUI_HOME}
 
-COPY observations_flask.py .
+COPY obsui.py .
 COPY conf conf
 COPY src src
 COPY static static
 COPY templates templates
 
 
-CMD [ "gunicorn", "observations_flask:app", "-b", "0.0.0.0:8090", \
+CMD [ "gunicorn", "obsui:app", "-b", "0.0.0.0:8090", \
       "-w", "4", "--capture-output", "--log-level", "info", \
-      "--access-logfile", "/opt/starbug.com/logs/gunicorn/obs-gunicorn-access.log", \
-      "--error-logfile",  "/opt/starbug.com/logs/gunicorn/obs-gunicorn-error.log", \
+      "--access-logfile", "/opt/starbug.com/logs/gunicorn/obsui-gunicorn-access.log", \
+      "--error-logfile",  "/opt/starbug.com/logs/gunicorn/obsui-gunicorn-error.log", \
       "--forwarded-allow-ips", "*"]

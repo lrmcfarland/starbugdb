@@ -6,28 +6,19 @@
 #
 # to run:              docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
 
-# to run with auth:    docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb --auth
-#
-# docker mongo shell:  docker exec -it starbugdb-00 mongo admin
-# docker bash  shell:  docker exec -it starbugdb-00 bash
-#
-# add initial user from mongo shell (OK with --auth on initial start up) (TODO script this)
-# > db.createUser({ user: 'admin', pwd: 'changeme', roles: [ { role: 'userAdminAnyDatabase', db: 'admin' } ] });
-#
-# to change passwords:
-# > db.changeUserPassword("<user>", "<new password>")
+# this will add auth from adding users in mongo_admin_setup.sh
 #
 # after auth:
 # docker mongo shell:  docker exec -it starbugdb-00 mongo admin -u admin -p changeme --authenticationDatabase admin
 #
 # with port 27017 exposed this is also accessible from the host with the mongo client
 #
-# add starbug users:   cd src
-#                      mongo admin -u admin -p changeme --authenticationDatabase admin add_users.js
+# mongo host client
+#          as admin:   mongo admin -u admin -p changeme --authenticationDatabase admin
+#           as root:   mongo admin -u root -p changemetoo --authenticationDatabase admin
+#        as starbug:   mongo starbug -u starbug -p changeme3 --authenticationDatabase starbug
 #
-# mongo host client:   mongo starbug -u starbug -p changeme3 --authenticationDatabase starbug
-#
-# after root user is added
+# root is for mongodumps and restore
 #
 # mongodump -u root -p changem3 --out ./starbug-2017-11-08
 # mongorestore -u root -p changem3 --drop ./starbug-2017-11-08/
@@ -38,5 +29,6 @@ FROM mongo
 LABEL maintainer "lrm@starbug.com"
 LABEL service "Starbug.com mongo database"
 
-# TODO run starbug-init here?
-# TODO CMD [ "mongod", "--storageEngine", "$STORAGE_ENGINE" "--httpinterface", "--rest", "--master", "--smallfiles" ]
+COPY src/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
+
+# TODO more like this? CMD [ "mongod", "--storageEngine", "$STORAGE_ENGINE" "--httpinterface", "--rest", "--master", "--smallfiles" ]
