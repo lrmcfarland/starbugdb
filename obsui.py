@@ -65,8 +65,10 @@ timezone_re = re.compile('(?P<sign>.*)(?P<hours>\d\d)(?P<mins>\d\d)')
 # TODO http://flask.pocoo.org/docs/0.12/patterns/appfactories/
 # http://flask.pocoo.org/docs/0.12/config/
 app = flask.Flask(__name__) # must be before decorators
+
 app.config.from_pyfile('conf/obs-flask.cfg') # TODO meh!
 
+app.logger.error('config {}'.format(app.config)) # TODO
 
 mongo = flask_pymongo.PyMongo(app)
 
@@ -74,6 +76,9 @@ mongo = flask_pymongo.PyMongo(app)
 # ===============
 # ===== app =====
 # ===============
+
+class Error(Exception):
+    pass
 
 
 @app.route("/")
@@ -185,15 +190,26 @@ def login_api():
 
         app.logger.info('TODO use user table to auth: %s', flask.request.args.get('username'))
 
+        users = mongo.db['users']
+
+        found = users.find({'name': flask.request.args.get('username')})
+
+        if found.count():
+            raise Error('user {} already exists'.format(args.username))
+
+        for user in users.find():
+            app.logger.error('user: {}'.format(user)) # TODO rm
+
+        flask.session[_username_key] = flask.request.args.get('username') # TODO user object
+
         # TODO use bcrypt
 
-    except flask_pymongo.pymongo.errors.OperationFailure as err:
-        app.logger.error('auth error: %s', err)
+
+    except (Error, flask_pymongo.pymongo.errors.OperationFailure) as err:
+        app.logger.error('login error: %s', err)
         result['error'] = str(err)
         return flask.jsonify(**result)
 
-
-    flask.session[_username_key] = flask.request.args.get('username')
 
     result['success'] = 'successful login'
 
