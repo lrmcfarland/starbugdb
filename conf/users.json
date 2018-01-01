@@ -1,10 +1,10 @@
 {
   "admin": {
+    "comment": "admin assumed to have been added manually in the mongo shell first. This will change the password",
     "db": "admin",
-    "comment": "assumed to have been added manually in the mongo shell before the others",
     "create_args": {
       "user": "admin",
-      "pwd": "changeme",
+      "pwd": "changeme4",
       "roles": [
         {
           "role": "userAdminAnyDatabase",
@@ -14,6 +14,7 @@
     }
   },
   "root": {
+    "comment": "for mongdump and restore",
     "db": "admin",
     "create_args": {
       "user": "root",
@@ -27,30 +28,14 @@
     }
   },
   "starbug": {
+    "comment": "for gunicorn access to the starbug database",
     "db": "starbug",
     "create_args": {
       "user": "starbug",
       "pwd": "changeme3",
       "roles": [
         {
-          "role": "dbAdmin",
-          "db": "starbug"
-        },
-        {
           "role": "readWrite",
-          "db": "starbug"
-        }
-      ]
-    }
-  },
-  "guest": {
-    "db": "starbug",
-    "create_args": {
-      "user": "guest",
-      "pwd": "guest",
-      "roles": [
-        {
-          "role": "read",
           "db": "starbug"
         }
       ]

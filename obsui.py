@@ -5,31 +5,10 @@
 
 Assumes the databsae has been populated with conf/users.json
 
-TODO? flask also uses this to also establish it session authorization.
-
 To run:
 
-./observations_flask.py -p 8888 -d -l debug
+./obsui.py -p 8888 -d -l debug
 
-TODO
-
-ERROR:root:flask.request.autorization: None
-ERROR:root:flask.request.parameter_storage_class: <class 'werkzeug.datastructures.ImmutableMultiDict'>
-
-
-    TODO insert
-
-    http://www.bogotobogo.com/python/MongoDB_PyMongo/python_MongoDB_RESTAPI_with_Flask.php
-
-@app.route('/star', methods=['POST'])
-def add_star():
-  star = mongo.db.stars
-  name = request.json['name']
-  distance = request.json['distance']
-  star_id = star.insert({'name': name, 'distance': distance})
-  new_star = star.find_one({'_id': star_id })
-  output = {'name' : new_star['name'], 'distance' : new_star['distance']}
-  return jsonify({'result' : output})
 
 
 ==================================================
@@ -99,7 +78,7 @@ mongo = flask_pymongo.PyMongo(app)
 
 @app.route("/")
 def home():
-    """Starbug database home"""
+    """Starbug observations home"""
 
     app.logger.info('obs_username %s', flask.session.get(_username_key, None))
 
@@ -124,7 +103,7 @@ def logout():
         mongo.db.logout()
         flask.session.pop(_username_key)
     except KeyError as err:
-        app.logger.error('missing session data %s', err)
+        app.logger.error('logout missing session name %s', err)
 
     return flask.redirect('/')
 
@@ -167,7 +146,6 @@ def info_api():
         # flask.session: <SecureCookieSession {u'obs_user': u'starbug',
         # u'obs_username': u'guest', u'obs_password': u'changeme3'}>
 
-        app.logger.error('users {} dir({})'.format(mongo.db.users.find(), dir(mongo.db.users.find())))
         for user in mongo.db.users.find():
             app.logger.info('\tuser %s', user)
 
@@ -208,31 +186,6 @@ def login_api():
         app.logger.info('TODO use user table to auth: %s', flask.request.args.get('username'))
 
         # TODO use bcrypt
-
-        if False:
-
-            # TODO authenticate depreciated. create mongoclient and save in session?
-            authed = mongo.db.authenticate(flask.request.args.get('username'),
-                                           flask.request.args.get('password'),
-                                           source='starbug')
-
-        elif False:
-
-            app.logger.debug('app config %s', app.config)
-
-            # TODO why explicit? shouldn't this happen in pymongo? https://stackoverflow.com/questions/32937407/authentication-problems-with-pymongo-and-flask
-            authed = mongo.db.authenticate(app.config['OBS_USERNAME'],
-                                           app.config['OBS_PASSWORD'],
-                                           source=app.config['OBS_DBNAME'])
-
-            app.logger.debug('app config %s', app.config)
-
-        else:
-            authed = 'not tried'
-
-
-        app.logger.debug('authed %s', authed)
-
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
         app.logger.error('auth error: %s', err)
