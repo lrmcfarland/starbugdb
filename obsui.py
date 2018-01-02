@@ -334,7 +334,7 @@ if __name__ == "__main__":
                 'host':'0.0.0.0',
                 'logfilename': '/opt/starbug.com/logs/flask',
                 'loghandler': 'stream',
-                'loglevel': 'debug',
+                'loglevel': 'warn',
                 'port': 8080,
     }
 
