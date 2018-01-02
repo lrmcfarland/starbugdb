@@ -1,39 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-"""Adds users to mongodb with bcrypt hashed passwords
-
-
-
-
-    for user in users:
-
-        print('-'*20) # linefeed
-
-        print(users[user]) # TODO rm
-        bcrypt_salt = bcrypt.gensalt()
-
-        print('bcrypt salt {}'.format(bcrypt_salt)
-
-        users[user]['create_args']['pwd'] = bcrypt.hashpw(
-            users[user]['create_args']['pwd'].encode('utf-8'), bcrypt_salt)
-
-        # add_user is depreciated
-        # client.starbug.add_user(users[user]['create_args']['user'],
-        #                        users[user]['create_args']['pwd'],
-        #                        roles=users[user]['create_args']['roles'])
-
-
-        client.starbug.command('createUser',
-                               args.username,
-                               args.password,
-                               roles=users[user]['create_args']['roles'])
-
-
-        print(users[user])
-
-
-"""
+"""Adds users to mongodb with bcrypt hashed passwords"""
 
 import argparse
 import bcrypt
@@ -99,7 +67,7 @@ if __name__ == '__main__':
             raise Error('user {} already exists'.format(args.username))
 
         users.insert({'username': args.username,
-                      'password': args.password, # TODO bcrypt
+                      'password': bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()),
                       'write': args.write})
 
     except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:

@@ -44,6 +44,7 @@ secret and while this will work, I don't think it is an improvement.
 """
 
 import argparse
+import bcrypt
 import datetime
 import flask
 import flask_pymongo
@@ -195,7 +196,7 @@ def login_api():
         a_user = found.next()
 
         # TODO use bcrypt
-        if a_user['password'] != flask.request.args.get('password'):
+        if not bcrypt.checkpw(flask.request.args.get('password').encode('utf-8'), a_user['password'].encode('utf-8')):
             raise Error('authentication failed')
 
         flask.session[_user_session_key] = {'username': a_user['username'],
