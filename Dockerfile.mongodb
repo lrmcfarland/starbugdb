@@ -5,8 +5,9 @@
 # to build:            docker build -f Dockerfile.mongodb -t starbugdb .
 #
 # to run:              docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
-
-# this will add auth from adding users in mongo_admin_setup.sh
+#
+# this will add auth from adding users in /docker-entrypoint-initdb.d/mongo_admin_setup.sh.
+# Edit passwords in ./conf/mongo_admin_setup.sh and obs-flask.cfg
 #
 # after auth:
 # docker mongo shell:  docker exec -it starbugdb-00 mongo admin -u admin -p changeme --authenticationDatabase admin
@@ -29,6 +30,4 @@ FROM mongo
 LABEL maintainer "lrm@starbug.com"
 LABEL service "Starbug.com mongo database"
 
-COPY src/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
-
-# TODO more like this? CMD [ "mongod", "--storageEngine", "$STORAGE_ENGINE" "--httpinterface", "--rest", "--master", "--smallfiles" ]
+COPY conf/mongo_admin_setup.sh /docker-entrypoint-initdb.d/

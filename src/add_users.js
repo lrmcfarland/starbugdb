@@ -24,7 +24,7 @@
 // load user config JSON
 // Assumes format is [{user:<user>, db:<db>, create_args: {user:<user>, pwd:<password>, roles: [{role: <role>, db:<db>}]}
 
-var users = JSON.parse(cat("../conf/users.json")); // TODO from command line args
+var users = JSON.parse(cat("users.json")); // TODO from command line args
 
 print(JSON.stringify(users, undefined, 2)); // TODO rm
 
