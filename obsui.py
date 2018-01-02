@@ -9,38 +9,7 @@ To run:
 
 ./obsui.py -p 8888 -d -l debug
 
-
-
-==================================================
-
-import bcrypt
-
-I experimented with using bcrypt to store passwords. For example
-
-
-  BCRYPT_SALT = '$2b$12$x06bwEbvN9K2fhsdu0bDS.' = bcrypt.gensalt()
-
-  bcrypt.hashpw(flask.request.args.get('password').encode('utf-8'), BCRYPT_SALT)
-
-  $2b$12$x06bwEbvN9K2fhsdu0bDS.5snXIp080hjHHEvMb/igrbcDH1Gk.ve
-
-Where the salt is the first part of the hash. The idea is to store
-the hash in the database and compare it to a hash of the input,
-but the seed needs to be the same for this to work. It is part
-the first part of the hash, so you can recover it from the saved
-key.
-
-But in this case I am using mongo to store the passwords. This secures
-any interface, including mongo command line tools, e.g.
-
-   $ mongo starbug -u starbug -p changeme3 --authenticationDatabase starbug
-
-The problem with storing them myself means I needed to access a mongo
-users table with hashed passwords before authenticating which seems to
-be unnecessary exposure if mongo will store them for me.
-
-I experimented with saving the hash in the flask config, like the
-secret and while this will work, I don't think it is an improvement.
+Use src/add_user.py to add users to test with.
 """
 
 import argparse
