@@ -2,106 +2,20 @@
 
 These are scripts for creating and maintaining the starbug monogo database.
 
-# TODO
-
-gunicorn is hit and miss with this authentication (using mognodb's
-user accounts as described below). after login intermittently
-complains that "no user is authenticated", but will sometimes work
-when re-clicked. session problem? running the flask ui directly is ok
-with it.
-
-# conf
-
-create conf/users.json and conf/aai-flask.cfg with database configuration
-and user credentials. These are not in .gitignore to provide an examle
-and for testing, but do need to be changed before production.
-
-TODO add a test that they are.
 
 
-## conf/users.json
+# pre build configure
 
-mongodb users example
+Dockerfile.mongodb will copy conf/mongo_admin_setup.sh to
+/docker-entrypoint-initdb.d/.  This file will create the initial
+mongodb users admin, root and starbug.  It also contains their initial
+passwords as examples that should be changed before building. The
+conf/obs-flask.cfg file uses the starbug account to access the
+database, so the uri must also be updated to match. I am still looking
+for a better way to do this.
 
-```
-{
-  "admin": {
-    "db": "admin",
-    "comment": "assumed to have been added manually in the mongo shell before the others",
-    "create_args": {
-      "user": "admin",
-      "pwd": "changeme",
-      "roles": [
-	{
-	  "role": "userAdminAnyDatabase",
-	  "db": "admin"
-	}
-      ]
-    }
-  },
-  "root": {
-    "db": "admin",
-    "create_args": {
-      "user": "root",
-      "pwd": "changemetoo",
-      "roles": [
-	{
-	  "role": "root",
-	  "db": "admin"
-	}
-      ]
-    }
-  },
-  "starbug": {
-    "db": "starbug",
-    "create_args": {
-      "user": "starbug",
-      "pwd": "changeme3",
-      "roles": [
-	{
-	  "role": "dbAdmin",
-	  "db": "starbug"
-	},
-	{
-	  "role": "readWrite",
-	  "db": "starbug"
-	}
-      ]
-    }
-  },
-  "guest": {
-    "db": "starbug",
-    "create_args": {
-      "user": "guest",
-      "pwd": "guest",
-      "roles": [
-	{
-	  "role": "read",
-	  "db": "starbug"
-	}
-      ]
-    }
-  }
-}
-
-```
-
-## conf/aai-flask.cfg
-
-aai-flask.cfg example. This needs the starbug credentials created above.
-
-```
-# base line aai flask config
-# https://flask-pymongo.readthedocs.io/en/latest/
-
-SECRET_KEY = 'seti2020'
-
-# inside container 'mongodb://starbugdb-00/starbug'
-MONGO_URI = 'mongodb://localhost:27017/starbug'
-
-MONGO_DBNAME = 'starbug'
-
-```
+To run flask from a shell on the local host not inside docker (to
+debug), you will need change the url as indicated in the comments.
 
 
 # build
@@ -114,38 +28,58 @@ One time setup
 docker volume create starbug-data
 ```
 
-## build docker image
+## starbugdb docker image
 
 ```
-docker build -f Dockerfile.mongodb -t starbugdb .
-
+docker build -f Dockerfile.obsui -t obsui-gunicorn .
 ```
 
-# run
+### run
 
 ```
-docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb --auth
+docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
 ```
 
-# Initialize database
-
-I am still working on how to fully automate this, but for now, I am
-having authorization issues when I try to generate the admin:
-userAdminAnyDatabase in a script. The work around is to create this one
-by hand:
+to open a bash to look the logs:
 
 ```
-$ docker exec -it starbugdb-00 mongo admin
-
- > db.createUser({ user: 'admin', pwd: 'changeme', roles: [ { role: 'userAdminAnyDatabase', db: 'admin' } ] });
-
+docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn --user root --entrypoint /bin/bash obsui-gunicorn
 ```
 
-The add users script creates root (for dump and restore), starbug (for dbAdmin, read/write), and guest (for read)
+## obsui-gunicorn docker image
+
+```
+docker build -f Dockerfile.obsui -t obsui-gunicorn .
+```
+
+### run
+
+```
+docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
+```
+
+to open a bash to look the logs:
+
+```
+docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn --user root --entrypoint /bin/bash obsui-gunicorn
+```
+
+
+
+# Add users
+
+Users passwords are stored hashed with bcrypt. The src/add_user.py
+script will install them.  At this time this is the only way to add
+users. TODO use flask-login tool
 
 ```
 $ cd src
-$ mongo admin add_users.js
+
+$ ./add_user.py -u guest -p guest
+
+$ ./add_user.py -u lister -p changeme -w
+
+
 ```
 
 [To chage a password](https://docs.mongodb.com/v3.0/reference/method/db.changeUserPassword/)
@@ -153,29 +87,7 @@ $ mongo admin add_users.js
 
 # Test
 
-```
-$ cd src
-
-$ mongo insert_test_data.js
-
-$ mongo starbug authafterconn.js
-MongoDB shell version v3.4.10
-connecting to: mongodb://127.0.0.1:27017/starbug
-MongoDB server version: 3.4.10
-{
-	"_id" : ObjectId("5a29c8d24aeaaa7bc3662be4"),
-	"name" : "Mercury",
-	"type" : "planet",
-	"datetime" : "2017-12-06T05:00:00-8"
-}
-{
-	"_id" : ObjectId("5a29c8d34aeaaa7bc3662be5"),
-	"name" : "Venus",
-	"type" : "planet",
-	"datetime" : "2017-12-06T06:00:00-8"
-}
-
-```
+todo
 
 # Dump
 
