@@ -5,6 +5,9 @@
 # emacs backups
 *~
 
+# python
+*.pyc
+
 # mac stuff
 *.DS_Store
 

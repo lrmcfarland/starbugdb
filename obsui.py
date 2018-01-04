@@ -3,281 +3,56 @@
 
 """Flask UI for the starbug observation database
 
-Assumes the databsae has been populated with conf/users.json
+The default config file conf/obs-flask.cfg is for running inside a
+container with mongod running as starbugdb-00.
 
-To run:
+To test from the local command line:
 
-./obsui.py -p 8888 -d -l debug
+./obsui.py -p 8888 -d -l debug -f conf/obs-flask-localhost.cfg
 
-Use src/add_user.py to add users to test with.
+
+Reference:
+
+    http://flask.pocoo.org/docs/0.12/patterns/appfactories/
+    http://flask.pocoo.org/docs/0.12/config/
+
 """
 
 import argparse
-import bcrypt
-import datetime
 import flask
-import flask_pymongo
-import json
 import logging
 import logging.handlers
-import re
-import time
 
-# ===================
-# ===== globals =====
-# ===================
-
-_user_session_key = 'username'
-
-timezone_re = re.compile('(?P<sign>.*)(?P<hours>\d\d)(?P<mins>\d\d)')
-
-# TODO http://flask.pocoo.org/docs/0.12/patterns/appfactories/
-# http://flask.pocoo.org/docs/0.12/config/
-
-app = flask.Flask(__name__) # must be before decorators
-app.config.from_pyfile('conf/obs-flask.cfg') # TODO hardcoded meh!
-mongo = flask_pymongo.PyMongo(app)
+import api
+import model
+import views
 
 
-# ===============
-# ===== app =====
-# ===============
+# =====================
+# ===== utilities =====
+# =====================
+
+def obsui_factory(conf_flnm):
+    """Creates a observations ui flask
+
+    Blueprints makes this much clearer
+
+    Args:
+        conf_flnm (str): configuration filename
 
 
-class Error(Exception):
-    pass
-
-
-@app.route("/")
-def home():
-    """Starbug observations home"""
-
-    app.logger.info('obs_username %s', flask.session.get(_user_session_key, None))
-
-    if flask.session.get(_user_session_key, None) is None:
-        return flask.render_template('login.html')
-    else:
-        return flask.render_template('home.html')
-
-
-@app.route("/login")
-def login():
-    """login page"""
-
-    return flask.render_template('login.html')
-
-
-@app.route("/logout")
-def logout():
-    """logout page"""
-
-    try:
-        flask.session.pop(_user_session_key)
-    except KeyError as err:
-        app.logger.error('logout missing session key %s', err)
-
-    return flask.redirect('/')
-
-
-@app.route("/record_observation")
-def record_observation():
-    """Application's home"""
-    return flask.render_template('record_observation.html')
-
-
-@app.route("/show_observations")
-def show_observations():
-    """Application's home"""
-    return flask.render_template('show_observations.html')
-
-
-# ---------------
-# ----- API -----
-# ---------------
-
-@app.route("/api/v1/info")
-def info_api():
-    """various database objects"""
-
-    app.logger.error('info called with request: %s', flask.request.args.to_dict())
-
-    result = dict()
-
-    result['db name'] = mongo.db.name
-
-    try:
-
-        app.logger.info('mongo.db.name: %s', mongo.db.name) # TODO rm
-
-        app.logger.info('%s collections', mongo.db.name) # TODO rm
-
-        app.logger.info('flask.session: %s', flask.session) # TODO rm exposes password!
-        # flask.session: <SecureCookieSession {u'obs_user': u'starbug',
-        # u'obs_username': u'guest', u'obs_password': u'changeme3'}>
-
-        for user in mongo.db.users.find():
-            app.logger.info('\tuser %s', user)
-
-        if False:
-            for collection in mongo.db.list_collections():
-                app.logger.info('\t%s', collection['name']) # TODO rm
-
-        obs = mongo.db['observations']
-
-        app.logger.debug('obs.full_name: %s', obs.full_name) # TODO rm?
-
-        app.logger.debug('obs.name: %s', obs.name)
-
-    except flask_pymongo.pymongo.errors.OperationFailure as err:
-        app.logger.error('info error: %s', err)
-        result['error'] = str(err)
-
-
-    return flask.jsonify(**result)
-
-
-# TODO? @app.route("/api/v1/login", methods=['POST'])
-@app.route("/api/v1/login")
-def login_api():
-    """Authenticate to the mongo database.
-
-    This uses mongodbs authentication mechanism to store
-    passwords. See note about bcrypt in the header
-
+    Returns a reference to the flask app
     """
 
-    app.logger.info('login called for user: %s', flask.request.args.get('username'))
+    app = flask.Flask(__name__)
+    app.config.from_pyfile(conf_flnm)
 
-    result = dict()
+    model.mongo.init_app(app)
 
-    try:
+    app.register_blueprint(views.home_page)
+    app.register_blueprint(api.api)
 
-        sbdb = mongo.db['users']
-
-        found = sbdb.find({'username': flask.request.args.get('username')})
-
-        if found.count() == 0:
-            raise Error('user "{}" does not exist'.format(flask.request.args.get('username')))
-
-        if found.count() > 1:
-            raise Error('user "{}" exists multiple times'.format(flask.request.args.get('username')))
-
-        a_user = found.next()
-
-        # TODO use bcrypt
-        if not bcrypt.checkpw(flask.request.args.get('password').encode('utf-8'), a_user['password'].encode('utf-8')):
-            raise Error('authentication failed')
-
-        flask.session[_user_session_key] = {'username': a_user['username'],
-                                            'write': a_user['write']} # omit mongo id: is not JSON serializable
-
-    except (Error, KeyError, flask_pymongo.pymongo.errors.OperationFailure) as err:
-        app.logger.error('login error: %s', err)
-        result['error'] = str(err)
-        return flask.jsonify(**result)
-
-
-    result['success'] = 'successful login'
-
-    return flask.jsonify(**result)
-
-
-# TODO? @app.route("/api/v1/record_observation", methods=['POST'])
-@app.route("/api/v1/record_observation")
-def record_observation_api():
-    """TODO POST?
-
-    http://werkzeug.pocoo.org/docs/0.12/datastructures/#werkzeug.datastructures.MultiDict.to_dict
-
-    TODO use aai /api/v1/lat,lon,dec,ra2decimal, /api/v1/datetime2iso8601
-         python3 for timezone? or coords.datemtime
-
-    TODO python3 supports timezone %z, this is a work around
-    TODO decimal time, fractional timezones
-    TODO use aai api to parse
-    """
-
-    app.logger.error('record observation called with request: %s', flask.request.args.to_dict())
-
-    result = dict()
-
-    try:
-
-        obs = flask.request.args.to_dict()
-        as_iso8601 = ''.join([obs['date'], 'T', obs['time']])
-
-        # TODO regex
-        if '.' in as_iso8601:
-            obs_datetime = datetime.datetime.strptime(as_iso8601, '%Y-%m-%dT%H:%M:%S.%f') # decimal seconds
-        else:
-            obs_datetime = datetime.datetime.strptime(as_iso8601, '%Y-%m-%dT%H:%M:%S')
-
-        tz_found = timezone_re.match(obs['timezone'])
-        if not tz_found:
-            result['error'] ='timezone {} is in an unsupported format. It must be [+/-]hhmm'.format(obs['timezone'])
-            app.logger.error(result['error'])
-            return flask.jsonify(**result)
-
-        obs_datetime += datetime.timedelta(hours=int(obs['timezone']))
-
-        obs['datetime'] = obs_datetime
-
-        obsdb = mongo.db['observations']
-
-        # TODO use mongodb roles?
-        if not flask.session[_user_session_key]['write']:
-            raise Error('user {} does not have write permission'.format(flask.session[_user_session_key]['username']))
-
-        res = obsdb.insert(obs)
-
-        result['status'] = 'success %s' % res # TODO meh
-        app.logger.error('result: %s', res)
-
-    except (Error, ValueError) as err:
-        result['error'] = 'Error: {}.'.format(err)
-        app.logger.error(result['error'])
-
-    except flask_pymongo.pymongo.errors.OperationFailure as err:
-        result['error'] = 'Operation Failure: {}\nTry logging out and in again.'.format(err)
-        app.logger.error('Operation Failure record_observation_api(): %s', err)
-
-    return flask.jsonify(**result)
-
-
-@app.route("/api/v1/show_observations")
-def show_observations_api():
-    """Return observations for display
-
-    TODO find criteria
-    """
-
-    app.logger.info('show observation called with request: %s', flask.request.args.to_dict())
-
-    result = dict()
-
-    try:
-        obsdb = mongo.db['observations']
-
-        result['data'] = list()
-
-        for obs in obsdb.find():
-            try:
-                result['data'].append({'name':obs['target_name'],
-                                       'date':obs['date'],
-                                       'time':obs['time'],
-                                       'ra':  obs['ra'],
-                                       'dec': obs['dec'],
-                                       'notes': obs['notes']})
-            except KeyError as err:
-                app.logger.error('skipping %s. %s', obs, err)
-
-        result['status'] = 'success' # TODO meh
-
-    except flask_pymongo.pymongo.errors.OperationFailure as err:
-        app.logger.error('auth error: %s\nTry logging out and in again.', err)
-        result['error'] = str(err)
-
-    return flask.jsonify(**result)
+    return app
 
 
 # ================
@@ -301,14 +76,19 @@ if __name__ == "__main__":
 
     defaults = {'debug': False,
                 'host':'0.0.0.0',
-                'logfilename': '/opt/starbug.com/logs/flask',
+                'logfile': '/opt/starbug.com/logs/flask',
                 'loghandler': 'stream',
                 'loglevel': 'warn',
+                'config': 'conf/obs-flask.cfg',
                 'port': 8080,
     }
 
 
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
+
+    parser.add_argument('-f', '--config', type=str, dest='config', default=defaults['config'],
+                        metavar='config',
+                        help='name of config file (default: %(default)s)')
 
     parser.add_argument('-d', '--debug', action='store_true',
                         dest='debug', default=defaults['debug'],
@@ -318,8 +98,8 @@ if __name__ == "__main__":
                         metavar='host',
                         help='host IP to serve (default: %(default)s)')
 
-    parser.add_argument('--logfilename', type=str, dest='logfilename', default=defaults['logfilename'],
-                        metavar='logfilename',
+    parser.add_argument('--logfile', type=str, dest='logfile', default=defaults['logfile'],
+                        metavar='logfile',
                         help='name of log file (default: %(default)s)')
 
     parser.add_argument('--loghandler', choices=list(loghandlers.keys()),
@@ -349,7 +129,7 @@ if __name__ == "__main__":
 
     elif args.loghandler == 'rotating':
 
-        log_handler = logging.handlers.RotatingFileHandler(args.logfilename,
+        log_handler = logging.handlers.RotatingFileHandler(args.logfile,
                                                            maxBytes=1000000,
                                                            backupCount=10) # TODO from cli
 
@@ -361,11 +141,13 @@ if __name__ == "__main__":
         logging.Formatter(
             '[%(asctime)s %(levelname)s %(filename)s %(lineno)s] %(message)s'))
 
-    app.logger.addHandler(log_handler)
-    app.logger.setLevel(loglevels[args.loglevel])
-
     # -------------------
     # ----- run app -----
     # -------------------
+
+    app = obsui_factory(args.config)
+
+    app.logger.addHandler(log_handler)
+    app.logger.setLevel(loglevels[args.loglevel])
 
     app.run(host=args.host, port=args.port, debug=args.debug)
