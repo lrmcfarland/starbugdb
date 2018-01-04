@@ -53,14 +53,9 @@ USER ${STARBUG_USER}:${STARBUG_GRP}
 
 WORKDIR ${OBSUI_HOME}
 
-# TODO move to src? Blueprint('api', ... template_folder='../templates')
-COPY api.py gobsui.py model.py obsui.py views.py ./
-
-COPY conf conf
 COPY src src
-COPY static static
-COPY templates templates
 
+WORKDIR ${OBSUI_HOME}/src
 
 CMD [ "gunicorn", "gobsui:app", "-b", "0.0.0.0:8090", \
       "-w", "4", "--capture-output", "--log-level", "info", \
