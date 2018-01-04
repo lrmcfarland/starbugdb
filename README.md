@@ -2,6 +2,7 @@
 
 These are scripts for creating and maintaining the starbug monogo database.
 
+obsui.py has the factory and main functions.
 
 
 # pre build configure
@@ -11,12 +12,10 @@ Dockerfile.mongodb will copy conf/mongo_admin_setup.sh to
 mongodb users admin, root and starbug.  It also contains their initial
 passwords as examples that should be changed before building. The
 conf/obs-flask.cfg file uses the starbug account to access the
-database, so the uri must also be updated to match. I am still looking
-for a better way to do this.
-
-To run flask from a shell on the local host not inside docker (to
-debug), you will need change the url as indicated in the comments.
-
+database, so the uri must also be updated to match. This is
+hardcoded factory input in the gobsui.py for gunicorn to find it,
+but it is a command line argument for obsui.main() and can
+be set as needed for testing.
 
 # build
 
@@ -67,6 +66,8 @@ docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicor
 
 
 # Add users
+
+TODO use flask-login instead
 
 Users passwords are stored hashed with bcrypt. The src/add_user.py
 script will install them.  At this time this is the only way to add
