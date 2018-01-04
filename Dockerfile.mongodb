@@ -30,4 +30,4 @@ FROM mongo
 LABEL maintainer "lrm@starbug.com"
 LABEL service "Starbug.com mongo database"
 
-COPY conf/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
+COPY src/conf/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
