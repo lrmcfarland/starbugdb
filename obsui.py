@@ -8,7 +8,7 @@ container with mongod running as starbugdb-00.
 
 To test from the local command line:
 
-./obsui.py -p 8888 -d -l debug -f conf/obs-flask-localhost.cfg
+./obsui.py -p 8888 -d -f conf/obs-flask-localhost.cfg
 
 
 Reference:
@@ -62,25 +62,10 @@ if __name__ == "__main__":
 
     """Run stand alone in flask"""
 
-
-    loglevels = {'debug': logging.DEBUG,
-                 'info': logging.INFO,
-                 'warn': logging.WARN,
-                 'error': logging.ERROR}
-
-
-    loghandlers = {'stream': 'stream',
-                   'rotating': 'rotating'}
-
-
-    defaults = {'debug': False,
+    defaults = {'config': 'conf/obs-flask.cfg',
+                'debug': False,
                 'host':'0.0.0.0',
-                'logfile': '/opt/starbug.com/logs/flask',
-                'loghandler': 'stream',
-                'loglevel': 'warn',
-                'config': 'conf/obs-flask.cfg',
-                'port': 8080,
-    }
+                'port': 8080}
 
 
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
@@ -97,56 +82,15 @@ if __name__ == "__main__":
                         metavar='host',
                         help='host IP to serve (default: %(default)s)')
 
-    parser.add_argument('--logfile', type=str, dest='logfile', default=defaults['logfile'],
-                        metavar='logfile',
-                        help='name of log file (default: %(default)s)')
-
-    parser.add_argument('--loghandler', choices=list(loghandlers.keys()),
-                        dest='loghandler', default=defaults['loghandler'],
-                        metavar='HANDLER',
-                        help='logging handler choice: %(keys)s (default: %(default)s)' % {
-                            'keys':', '.join(list(loghandlers.keys())), 'default':'%(default)s'})
-
-    parser.add_argument('-l', '--loglevel', choices=list(loglevels.keys()),
-                        dest='loglevel', default=defaults['loglevel'],
-                        metavar='LEVEL',
-                        help='logging level choice: %(keys)s (default: %(default)s)' % {
-                            'keys':', '.join(list(loglevels.keys())), 'default':'%(default)s'})
-
     parser.add_argument('-p', '--port', type=int, dest='port', default=defaults['port'],
                         help='port (default: %(default)s)')
 
     args = parser.parse_args()
-
-
-
-    # ----- set up logging -----
-
-    if args.loghandler == 'stream':
-
-        log_handler = logging.StreamHandler()
-
-    elif args.loghandler == 'rotating':
-
-        log_handler = logging.handlers.RotatingFileHandler(args.logfile,
-                                                           maxBytes=1000000,
-                                                           backupCount=10) # TODO from cli
-
-    else:
-        parser.error('unsupported log handler %s', args.loghandler)
-
-
-    log_handler.setFormatter(
-        logging.Formatter(
-            '[%(asctime)s %(levelname)s %(filename)s %(lineno)s] %(message)s'))
 
     # -------------------
     # ----- run app -----
     # -------------------
 
     app = factory(args.config)
-
-    app.logger.addHandler(log_handler)
-    app.logger.setLevel(loglevels[args.loglevel])
 
     app.run(host=args.host, port=args.port, debug=args.debug)
