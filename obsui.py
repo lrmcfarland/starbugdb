@@ -3,11 +3,19 @@
 
 """Flask UI for the starbug observation database
 
-To run:
+The default config file conf/obs-flask.cfg is for running inside a
+container with mongod running as starbugdb-00.
 
-./obsui.py -p 8888 -d -l debug
+To test from the local command line:
 
-Use src/add_user.py to add users to test with.
+./obsui.py -p 8888 -d -l debug -f conf/obs-flask-localhost.cfg
+
+
+Reference:
+
+    http://flask.pocoo.org/docs/0.12/patterns/appfactories/
+    http://flask.pocoo.org/docs/0.12/config/
+
 """
 
 import argparse
@@ -20,24 +28,31 @@ import model
 import views
 
 
-# ===================
-# ===== globals =====
-# ===================
+# =====================
+# ===== utilities =====
+# =====================
+
+def obsui_factory(conf_flnm):
+    """Creates a observations ui flask
+
+    Blueprints makes this much clearer
+
+    Args:
+        conf_flnm (str): configuration filename
 
 
-# TODO http://flask.pocoo.org/docs/0.12/patterns/appfactories/
-# http://flask.pocoo.org/docs/0.12/config/
+    Returns a reference to the flask app
+    """
 
+    app = flask.Flask(__name__)
+    app.config.from_pyfile(conf_flnm)
 
-app = flask.Flask(__name__)
+    model.mongo.init_app(app)
 
-app.config.from_pyfile('conf/obs-flask.cfg') # TODO hardcoded meh!
+    app.register_blueprint(views.home_page)
+    app.register_blueprint(api.api)
 
-model.mongo.init_app(app)
-
-app.register_blueprint(views.home_page)
-
-app.register_blueprint(api.api)
+    return app
 
 
 # ================
@@ -61,14 +76,19 @@ if __name__ == "__main__":
 
     defaults = {'debug': False,
                 'host':'0.0.0.0',
-                'logfilename': '/opt/starbug.com/logs/flask',
+                'logfile': '/opt/starbug.com/logs/flask',
                 'loghandler': 'stream',
                 'loglevel': 'warn',
+                'config': 'conf/obs-flask.cfg',
                 'port': 8080,
     }
 
 
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
+
+    parser.add_argument('-f', '--config', type=str, dest='config', default=defaults['config'],
+                        metavar='config',
+                        help='name of config file (default: %(default)s)')
 
     parser.add_argument('-d', '--debug', action='store_true',
                         dest='debug', default=defaults['debug'],
@@ -78,8 +98,8 @@ if __name__ == "__main__":
                         metavar='host',
                         help='host IP to serve (default: %(default)s)')
 
-    parser.add_argument('--logfilename', type=str, dest='logfilename', default=defaults['logfilename'],
-                        metavar='logfilename',
+    parser.add_argument('--logfile', type=str, dest='logfile', default=defaults['logfile'],
+                        metavar='logfile',
                         help='name of log file (default: %(default)s)')
 
     parser.add_argument('--loghandler', choices=list(loghandlers.keys()),
@@ -109,7 +129,7 @@ if __name__ == "__main__":
 
     elif args.loghandler == 'rotating':
 
-        log_handler = logging.handlers.RotatingFileHandler(args.logfilename,
+        log_handler = logging.handlers.RotatingFileHandler(args.logfile,
                                                            maxBytes=1000000,
                                                            backupCount=10) # TODO from cli
 
@@ -121,11 +141,13 @@ if __name__ == "__main__":
         logging.Formatter(
             '[%(asctime)s %(levelname)s %(filename)s %(lineno)s] %(message)s'))
 
-    app.logger.addHandler(log_handler)
-    app.logger.setLevel(loglevels[args.loglevel])
-
     # -------------------
     # ----- run app -----
     # -------------------
+
+    app = obsui_factory(args.config)
+
+    app.logger.addHandler(log_handler)
+    app.logger.setLevel(loglevels[args.loglevel])
 
     app.run(host=args.host, port=args.port, debug=args.debug)
