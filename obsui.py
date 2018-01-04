@@ -27,12 +27,11 @@ import api
 import model
 import views
 
-
 # =====================
 # ===== utilities =====
 # =====================
 
-def obsui_factory(conf_flnm):
+def factory(conf_flnm):
     """Creates a observations ui flask
 
     Blueprints makes this much clearer
@@ -44,15 +43,15 @@ def obsui_factory(conf_flnm):
     Returns a reference to the flask app
     """
 
-    app = flask.Flask(__name__)
-    app.config.from_pyfile(conf_flnm)
+    obsui_app = flask.Flask(__name__)
+    obsui_app.config.from_pyfile(conf_flnm)
 
-    model.mongo.init_app(app)
+    model.mongo.init_app(obsui_app)
 
-    app.register_blueprint(views.home_page)
-    app.register_blueprint(api.api)
+    obsui_app.register_blueprint(views.home_page)
+    obsui_app.register_blueprint(api.api)
 
-    return app
+    return obsui_app
 
 
 # ================
@@ -145,7 +144,7 @@ if __name__ == "__main__":
     # ----- run app -----
     # -------------------
 
-    app = obsui_factory(args.config)
+    app = factory(args.config)
 
     app.logger.addHandler(log_handler)
     app.logger.setLevel(loglevels[args.loglevel])

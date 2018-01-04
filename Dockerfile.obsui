@@ -53,15 +53,21 @@ USER ${STARBUG_USER}:${STARBUG_GRP}
 
 WORKDIR ${OBSUI_HOME}
 
+# TODO move to src?
+COPY api.py .
+COPY gobsui.py .
+COPY model.py .
 COPY obsui.py .
+COPY views.py .
+
 COPY conf conf
 COPY src src
 COPY static static
 COPY templates templates
 
 
-CMD [ "gunicorn", "obsui:app", "-b", "0.0.0.0:8090", \
+CMD [ "gunicorn", "gobsui:app", "-b", "0.0.0.0:8090", \
       "-w", "4", "--capture-output", "--log-level", "info", \
-      "--access-logfile", "/opt/starbug.com/logs/gunicorn/obsui-gunicorn-access.log", \
-      "--error-logfile",  "/opt/starbug.com/logs/gunicorn/obsui-gunicorn-error.log", \
+      "--access-logfile", "/opt/starbug.com/logs/gunicorn/gobsui-gunicorn-access.log", \
+      "--error-logfile",  "/opt/starbug.com/logs/gunicorn/gobsui-gunicorn-error.log", \
       "--forwarded-allow-ips", "*"]
