@@ -20,16 +20,23 @@ Reference:
 
 import argparse
 import flask
+import flask_login
 import logging
 import logging.handlers
 
 import api
 import model
+import user
 import views
 
 # =====================
 # ===== utilities =====
 # =====================
+
+# TODO like model.mongo?
+login_manager = flask_login.login_manager.LoginManager()
+login_manager.login_view = 'home_blueprint.login'
+
 
 def factory(conf_flnm):
     """Creates a observations ui flask
@@ -51,7 +58,19 @@ def factory(conf_flnm):
     obsui_app.register_blueprint(views.home_page)
     obsui_app.register_blueprint(api.api)
 
+    login_manager.init_app(obsui_app)
+
     return obsui_app
+
+
+@login_manager.user_loader
+def load_user(user_id):
+    """load manager user loader"""
+    users = model.mongo.db['users']
+    found = users.find_one({'_id': bson.objectid.ObjectId(user_id)})
+    if found:
+        return user.User(**found)
+    return None
 
 
 # ================

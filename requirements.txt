@@ -1,5 +1,6 @@
 # pip install
 
+bcrypt
 flask
 Flask-PyMongo
 Flask-Login

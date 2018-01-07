@@ -35,3 +35,48 @@ def record_observation():
 @home_page.route("/show_observations")
 def show_observations():
     return flask.render_template('show_observations.html')
+
+
+@home_page.route("/login", methods=['GET', 'POST'])
+def login():
+    """Authenticate to the mongo database.
+
+    the return is to the authenticate() function in the login.html
+    template javascript which completes the redirect
+    """
+
+
+    if flask.request.method == 'GET':
+        return flask.render_template('login.html')
+
+    try:
+
+        user_creds = json.loads(flask.request.get_data())
+
+        sbdb = model.mongo.db['users']
+
+        found = sbdb.find_one({'email': user_creds['username']})
+        if not found:
+            raise Error('no user {}'.format(user_creds['username']))
+        a_user = user.User(**found)
+
+        if not bcrypt.checkpw(user_creds['password'].encode('utf-8'), a_user.password.encode('utf-8')):
+            raise Error('authentication failed')
+
+        flask_login.login_user(a_user)
+
+        return flask.request.args.get('next') or flask.url_for('home_blueprint.record_observation')
+
+    except (Error, AttributeError, KeyError, flask_pymongo.pymongo.errors.OperationFailure) as err:
+        flask.flash('{}'.format(err))
+        return flask.url_for('home_blueprint.login')
+
+    return flask.render_template('login.html')
+
+
+@home_page.route("/logout")
+@flask_login.login_required
+def logout():
+    flask_login.logout_user()
+    return flask.redirect(flask.url_for('home_blueprint.login'))
+
