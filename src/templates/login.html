@@ -10,25 +10,17 @@
 
     function authenticate() {
 
-      {# TODO POST? #}
-      $.getJSON($SCRIPT_ROOT + "/login",
-	{
-	  username: $('input[name="username"]').val(),
-	  password: $('input[name="password"]').val(),
-	},
-	function(record_result) {
+      var login_creds = JSON.stringify(
+         {"username": $('input[name="username"]').val(),
+	  "password": $('input[name="password"]').val(),
+	});
 
-	  if ("error" in record_result) {
+      $.post($SCRIPT_ROOT + "/login", login_creds,
 
-	    alert("Error: " + record_result.error);
+	function(data) {
 
-	      window.location.assign("/login");
+          window.location.assign(data);
 
-	  } else {
-
-	    window.location.assign("/");
-
-	  };
       }); {# end getJSON #}
 
     }; {# end authenticate #}

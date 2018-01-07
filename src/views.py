@@ -18,6 +18,7 @@ import bcrypt
 import flask
 import flask_login
 import flask_pymongo
+import json
 
 import model
 import user
@@ -30,32 +31,25 @@ class Error(Exception):
     pass
 
 
-# TODO requires login?
 @home_page.route('/')
 def show_home():
     return flask.render_template('home.html')
 
 
-# TODO requires login
 @home_page.route("/record_observation")
+@flask_login.login_required
 def record_observation():
     return flask.render_template('record_observation.html')
 
 
-# TODO requires login
-@home_page.route("/show_observations")
+@home_page.route("/show_observations", methods=['GET', 'POST'])
 def show_observations():
     return flask.render_template('show_observations.html')
 
 
 @home_page.route("/login", methods=['GET', 'POST'])
 def login():
-    """Authenticate to the mongo database.
-
-    the return is to the authenticate() function in the login.html
-    template javascript which completes the redirect
-    """
-
+    """Authenticate to the mongo database"""
 
     if flask.request.method == 'GET':
         return flask.render_template('login.html')
@@ -64,11 +58,10 @@ def login():
 
         user_creds = json.loads(flask.request.get_data())
 
-        sbdb = model.mongo.db['users']
-
-        found = sbdb.find_one({'email': user_creds['username']})
+        found = model.mongo.db['users'].find_one({'email': user_creds['username']})
         if not found:
             raise Error('no user {}'.format(user_creds['username']))
+
         a_user = user.User(**found)
 
         if not bcrypt.checkpw(user_creds['password'].encode('utf-8'), a_user.password.encode('utf-8')):
@@ -90,4 +83,3 @@ def login():
 def logout():
     flask_login.logout_user()
     return flask.redirect(flask.url_for('home_blueprint.login'))
-
