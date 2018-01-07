@@ -14,12 +14,23 @@ if it is not aligned correctly.
 
 """
 
+import bcrypt
 import flask
+import flask_login
+import flask_pymongo
+
+import model
+import user
 
 
 home_page = flask.Blueprint('home_blueprint', __name__, template_folder='templates')
 
-# TODO requires login
+
+class Error(Exception):
+    pass
+
+
+# TODO requires login?
 @home_page.route('/')
 def show_home():
     return flask.render_template('home.html')

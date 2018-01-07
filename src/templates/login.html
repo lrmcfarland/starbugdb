@@ -11,7 +11,7 @@
     function authenticate() {
 
       {# TODO POST? #}
-      $.getJSON($SCRIPT_ROOT + "/api/v1/login",
+      $.getJSON($SCRIPT_ROOT + "/login",
 	{
 	  username: $('input[name="username"]').val(),
 	  password: $('input[name="password"]').val(),
