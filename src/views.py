@@ -58,7 +58,7 @@ def login():
 
         user_creds = json.loads(flask.request.get_data())
 
-        found = model.mongo.db['users'].find_one({'email': user_creds['username']})
+        found = model.mongo.db['users'].find_one({'username': user_creds['username']})
         if not found:
             raise Error('no user {}'.format(user_creds['username']))
 

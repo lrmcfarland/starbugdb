@@ -14,12 +14,17 @@
 
     $(document).ready(function() {
 
+      $('input[name="observer"]').val("{{ current_user.username }}")
+
       {# ----- record observation ----- #}
+
+      {# TODO dont add blanks, db require fields? have api return error? #}
 
       $("#record_observation").click(function(e) {
 
 	$.getJSON($SCRIPT_ROOT + "/api/v1/record_observation",
 	  {
+	    observer: $('input[name="observer"]').val(),
 	    latitude: $('input[name="latitude"]').val(),
 	    longitude: $('input[name="longitude"]').val(),
 	    date: $('input[name="date"]').val(),
@@ -27,7 +32,7 @@
 	    timezone: $('input[name="timezone"]').val(),
 	    dst: $("#_dst").is(':checked'), {# jQuery selector #}
 
-	    target_name: $('input[name="TargetName"]').val(),
+	    target: $('input[name="Target"]').val(),
 	    ra: $('input[name="RightAscension"]').val(),
 	    dec: $('input[name="Declination"]').val(),
 	    notes: $('textarea[name="Notes"]').val()
@@ -37,9 +42,14 @@
 
 	    if ("error" in record_result) {
 	      alert("Error: " + record_result.error);
-	    };
+	    } else {
 
-            {# TODO clear RA and dec for next, dont add blanks, db require fields? #}
+              {# TODO clear RA and dec for next #}
+
+              $('input[name="RightAscension"]').val("")
+              $('input[name="Declination"]').val("")
+              $('textarea[name="Notes"]').val("")
+            };
 
 	  }); {# end getJSON #}
 
@@ -110,7 +120,7 @@ button#record_observation {
       </th>
 
       <td>
-	<input type="text" id="_target_name" name="TargetName">
+	<input type="text" id="_target" name="Target">
       </td>
 
       <td colspan="2">Jupiter, Saturn et al.</td>

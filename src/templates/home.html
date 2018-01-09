@@ -14,18 +14,18 @@
 
     $(document).ready(function() {
 
-      $("#record_observation").click(function(e) {
-
-	window.location.assign("/record_observation");
-
-      }); {# end record observation click #}
-
-
       $("#show_observations").click(function(e) {
 
 	window.location.assign("/show_observations");
 
       }); {# end show_observations click #}
+
+
+      $("#record_observation").click(function(e) {
+
+	window.location.assign("/record_observation");
+
+      }); {# end record observation click #}
 
 
       $("#logout").click(function(e) {
@@ -68,23 +68,20 @@
 
     <tr>
       <td>
-	<button id="record_observation">Record Observation</button>
+	<button id="show_observations">Show Observations</button>
       </td>
-
     </tr>
 
     <tr>
       <td>
-	<button id="show_observations">Show Observations</button>
+	<button id="record_observation">Record Observation</button>
       </td>
-
     </tr>
 
     <tr>
       <td>
 	<button id="logout">Logout</button>
       </td>
-
     </tr>
 
   </table>
