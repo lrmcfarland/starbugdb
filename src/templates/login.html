@@ -10,25 +10,17 @@
 
     function authenticate() {
 
-      {# TODO POST? #}
-      $.getJSON($SCRIPT_ROOT + "/api/v1/login",
-	{
-	  username: $('input[name="username"]').val(),
-	  password: $('input[name="password"]').val(),
-	},
-	function(record_result) {
+      var login_creds = JSON.stringify(
+         {"username": $('input[name="username"]').val(),
+	  "password": $('input[name="password"]').val(),
+	});
 
-	  if ("error" in record_result) {
+      $.post($SCRIPT_ROOT + "/login", login_creds,
 
-	    alert("Error: " + record_result.error);
+	function(data) {
 
-	      window.location.assign("/login");
+          window.location.assign(data);
 
-	  } else {
-
-	    window.location.assign("/");
-
-	  };
       }); {# end getJSON #}
 
     }; {# end authenticate #}
@@ -134,6 +126,21 @@ button#authenticate_login {
   </table>
 
 </div>
+
+<div class="container">
+
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+
+</div>
+
 
 
 {% endblock %}

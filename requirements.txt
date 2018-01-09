@@ -3,5 +3,6 @@
 bcrypt
 flask
 Flask-PyMongo
+Flask-Login
 gunicorn
 
