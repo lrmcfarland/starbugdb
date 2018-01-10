@@ -5,6 +5,7 @@
 
 import datetime
 import flask
+import flask_login
 import flask_pymongo
 import re
 
@@ -57,9 +58,9 @@ def info():
     return flask.jsonify(**result)
 
 
-# TODO requiers login
 # TODO? @api.route("/record_observation", methods=['POST'])
 @api.route("/record_observation")
+@flask_login.login_required
 def record_observation_api():
     """TODO POST?
 

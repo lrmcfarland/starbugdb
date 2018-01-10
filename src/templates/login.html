@@ -16,12 +16,10 @@
 	});
 
       $.post($SCRIPT_ROOT + "/login", login_creds,
-
 	function(data) {
-
           window.location.assign(data);
-
-      }); {# end getJSON #}
+        }
+      ); {# end post #}
 
     }; {# end authenticate #}
 
