@@ -70,7 +70,6 @@ def load_user(user_id):
     users = model.mongo.db['users']
     found = users.find_one({'_id': bson.objectid.ObjectId(user_id)})
     if found:
-        print('found user {}'.format(found)) # TODO rm
         return user.User(**found)
     return None
 

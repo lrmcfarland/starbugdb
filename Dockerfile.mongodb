@@ -9,6 +9,7 @@
 # this will add auth from adding users in /docker-entrypoint-initdb.d/mongo_admin_setup.sh.
 # Edit passwords in ./conf/mongo_admin_setup.sh and obs-flask.cfg
 #
+# docker bash  shell:  docker exec -it starbugdb-00 bash
 # after auth:
 # docker mongo shell:  docker exec -it starbugdb-00 mongo admin -u admin -p changeme --authenticationDatabase admin
 #

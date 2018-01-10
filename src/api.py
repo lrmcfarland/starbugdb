@@ -126,7 +126,8 @@ def show_observations_api():
 
         for obs in obsdb.find():
             try:
-                result['data'].append({'name':obs['target_name'],
+                result['data'].append({'observer':obs['observer'],
+                                       'target':obs['target'],
                                        'date':obs['date'],
                                        'time':obs['time'],
                                        'ra':  obs['ra'],
