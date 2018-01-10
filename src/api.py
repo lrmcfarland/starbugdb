@@ -5,7 +5,9 @@
 
 import datetime
 import flask
+import flask_login
 import flask_pymongo
+import json
 import re
 
 import model
@@ -57,13 +59,10 @@ def info():
     return flask.jsonify(**result)
 
 
-# TODO requiers login
-# TODO? @api.route("/record_observation", methods=['POST'])
-@api.route("/record_observation")
+@api.route("/record_observation", methods=['GET', 'POST'])
+@flask_login.login_required
 def record_observation_api():
-    """TODO POST?
-
-    http://werkzeug.pocoo.org/docs/0.12/datastructures/#werkzeug.datastructures.MultiDict.to_dict
+    """Record an observation
 
     TODO use aai /lat,lon,dec,ra2decimal, /datetime2iso8601
          python3 for timezone? or coords.datemtime
@@ -75,9 +74,14 @@ def record_observation_api():
 
     result = dict()
 
+    if flask.request.method == 'GET':
+        result['error'] = 'Error POST required'
+        return flask.jsonify(**result)
+
+
     try:
 
-        obs = flask.request.args.to_dict()
+        obs = json.loads(flask.request.get_data())
         as_iso8601 = ''.join([obs['date'], 'T', obs['time']])
 
         # TODO regex
@@ -88,7 +92,7 @@ def record_observation_api():
 
         tz_found = timezone_re.match(obs['timezone'])
         if not tz_found:
-            result['error'] ='timezone {} is in an unsupported format. It must be [+/-]hhmm'.format(obs['timezone'])
+            result['error'] = 'timezone {} is in an unsupported format. It must be [+/-]hhmm'.format(obs['timezone'])
             return flask.jsonify(**result)
 
         obs_datetime += datetime.timedelta(hours=int(obs['timezone']))

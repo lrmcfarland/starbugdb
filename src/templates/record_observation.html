@@ -22,36 +22,38 @@
 
       $("#record_observation").click(function(e) {
 
-	$.getJSON($SCRIPT_ROOT + "/api/v1/record_observation",
+	var observation = JSON.stringify(
 	  {
-	    observer: $('input[name="observer"]').val(),
-	    latitude: $('input[name="latitude"]').val(),
-	    longitude: $('input[name="longitude"]').val(),
-	    date: $('input[name="date"]').val(),
-	    time: $('input[name="time"]').val(),
-	    timezone: $('input[name="timezone"]').val(),
-	    dst: $("#_dst").is(':checked'), {# jQuery selector #}
+	    "observer": $('input[name="observer"]').val(),
+	    "latitude": $('input[name="latitude"]').val(),
+	    "longitude": $('input[name="longitude"]').val(),
+	    "date": $('input[name="date"]').val(),
+	    "time": $('input[name="time"]').val(),
+	    "timezone": $('input[name="timezone"]').val(),
+	    "dst": $("#_dst").is(':checked'), {# jQuery selector #}
 
-	    target: $('input[name="Target"]').val(),
-	    ra: $('input[name="RightAscension"]').val(),
-	    dec: $('input[name="Declination"]').val(),
-	    notes: $('textarea[name="Notes"]').val()
+	    "target": $('input[name="Target"]').val(),
+	    "ra": $('input[name="RightAscension"]').val(),
+	    "dec": $('input[name="Declination"]').val(),
+	    "notes": $('textarea[name="Notes"]').val()
 
-	  },
+	  });
+
+	$.post($SCRIPT_ROOT + "/api/v1/record_observation", observation,
 	  function(record_result) {
 
 	    if ("error" in record_result) {
 	      alert("Error: " + record_result.error);
 	    } else {
 
-              {# TODO clear RA and dec for next #}
+	      {# TODO clear RA and dec for next #}
 
-              $('input[name="RightAscension"]').val("")
-              $('input[name="Declination"]').val("")
-              $('textarea[name="Notes"]').val("")
-            };
+	      $('input[name="RightAscension"]').val("")
+	      $('input[name="Declination"]').val("")
+	      $('textarea[name="Notes"]').val("")
+	    };
 
-	  }); {# end getJSON #}
+	  }); {# end post #}
 
 
 	return false;
