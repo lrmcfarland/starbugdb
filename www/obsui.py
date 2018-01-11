@@ -80,8 +80,6 @@ def load_user(user_id):
 
 if __name__ == "__main__":
 
-    """Run stand alone in flask"""
-
     defaults = {'config': 'conf/obs-flask.cfg',
                 'debug': False,
                 'host':'0.0.0.0',
