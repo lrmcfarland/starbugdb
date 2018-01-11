@@ -53,9 +53,9 @@ USER ${STARBUG_USER}:${STARBUG_GRP}
 
 WORKDIR ${OBSUI_HOME}
 
-COPY src src
+COPY www www
 
-WORKDIR ${OBSUI_HOME}/src
+WORKDIR ${OBSUI_HOME}/www
 
 CMD [ "gunicorn", "gobsui:app", "-b", "0.0.0.0:8090", \
       "-w", "4", "--capture-output", "--log-level", "info", \
