@@ -32,3 +32,5 @@ LABEL maintainer "lrm@starbug.com"
 LABEL service "Starbug.com mongo database"
 
 COPY www/conf/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
+
+CMD ["mongod", "--smallfiles"]

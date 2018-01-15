@@ -23,7 +23,7 @@
 FROM centos
 
 LABEL maintainer "lrm@starbug.com"
-LABEL service "Starbug mongodb observation gunicorn wrapper"
+LABEL service "Starbug observation mongodb gunicorn user interface"
 
 RUN yum update -y
 
