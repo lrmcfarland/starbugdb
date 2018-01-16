@@ -6,8 +6,12 @@
 #
 # to run:              docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
 #
-# this will add auth from adding users in /docker-entrypoint-initdb.d/mongo_admin_setup.sh.
-# Edit passwords in ./conf/mongo_admin_setup.sh and obs-flask.cfg
+# This will add auth with the admin, root and starbug users in
+# /docker-entrypoint-initdb.d/mongo_admin_setup.sh.  Edit passwords
+# there and and the secret in ./conf/mongo_admin_setup.sh and
+# obs-flask.cfg
+#
+# to add users: cd www; ./users.py -h
 #
 # docker bash  shell:  docker exec -it starbugdb-00 bash
 # after auth:
@@ -17,8 +21,8 @@
 #
 # mongo host client
 #          as admin:   mongo admin -u admin -p changeme --authenticationDatabase admin
-#           as root:   mongo admin -u root -p changemetoo --authenticationDatabase admin
-#        as starbug:   mongo starbug -u starbug -p changeme3 --authenticationDatabase starbug
+#           as root:   mongo admin -u root -p changeme --authenticationDatabase admin
+#        as starbug:   mongo starbug -u starbug -p changeme --authenticationDatabase starbug
 #
 # root is for mongodumps and restore
 #

@@ -5,8 +5,8 @@
 echo "mongo admin setup called"
 
 export ADMIN_PASSWORD='changeme'
-export ROOT_PASSWORD='changemetoo'
-export STARBUG_PASSWORD='changeme3'
+export ROOT_PASSWORD='changeme'
+export STARBUG_PASSWORD='changeme'
 
 
 mongo admin --eval "db.createUser({ user: 'admin', pwd: '$ADMIN_PASSWORD', roles: [ { role: 'userAdminAnyDatabase', db: 'admin' } ] });"
