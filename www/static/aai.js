@@ -26,9 +26,16 @@ aai.setLocation = function() {
 	document.getElementById(longitude_id).value = longitude;
 
 	// TODO floor < 0, ceiling > 0 better for timezone?
-	timezone = Math.ceil(Math.round(longitude / 15)); // assumes degrees
+	var timezone = Math.ceil(Math.round(longitude / 15)); // assumes degrees
 
-	document.getElementById(timezone_id).value = timezone;
+	// TODO partial timezones
+	var abstz = Math.abs(timezone);
+	var tzsign = "+";
+	if (timezone < 0) {
+            tzsign = "-";
+	}
+
+	document.getElementById(timezone_id).value = tzsign + abstz.toString().padStart(2, "0") + "00";
     };
 
     function error(err) {

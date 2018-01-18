@@ -17,7 +17,7 @@ import model
 # ===================
 
 # TODO until python3
-timezone_re = re.compile('(?P<sign>.*)(?P<hours>\d\d)(?P<mins>\d\d)')
+timezone_re = re.compile('(?P<sign>[+-]*)(?P<hours>\d\d)(?P<mins>\d\d)')
 
 
 api = flask.Blueprint('api', __name__, url_prefix='/api/v1')
@@ -28,8 +28,8 @@ api = flask.Blueprint('api', __name__, url_prefix='/api/v1')
 # ===============
 
 
-# TODO requiers login
 @api.route("/info")
+@flask_login.login_required
 def info():
     """various database objects"""
 
