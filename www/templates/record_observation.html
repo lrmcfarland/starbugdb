@@ -14,11 +14,28 @@
 
     $(document).ready(function() {
 
-      $('label[for="observer_id"]').html("{{ current_user.username }}") {# TODO label not input #}
+      $('label[for="observer_id"]').html("{{ current_user.username }}")
+
+
+      {# ----- toggle radec coords ----- #}
+
+      $("#radec_button").click(function(e) {
+	$("#radec_coords").show();
+	$("#azalt_coords").hide();
+      }); {# end radec_button click #}
+
+
+      {# ----- toggle azalt coords ----- #}
+
+      $("#azalt_button").click(function(e) {
+	$("#azalt_coords").show();
+	$("#radec_coords").hide();
+      }); {# end azalt_button click #}
+
 
       {# ----- record observation ----- #}
 
-      {# TODO dont add blanks, db require fields? have api return error? #}
+      {# TODO data cleanup, convert lat, long ::: to decimal from aai api, dont add blanks, db require fields? have api return error? #}
 
       $("#record_observation").click(function(e) {
 
@@ -34,12 +51,12 @@
 
 	    "target": $('input[name="Target"]').val(),
 
-            {# TODO convert from az alt if needed #}
+	    {# TODO convert from az alt if needed #}
 
 	    "ra": $('input[name="RightAscension"]').val(),
 	    "dec": $('input[name="Declination"]').val(),
 
-            {# TODO include photos #}
+	    {# TODO include photos #}
 
 	    "notes": $('textarea[name="Notes"]').val()
 
@@ -65,11 +82,6 @@
 	return false;
 
       }); {# end record observation click #}
-
-
-
-
-
 
 
     }); {# end ready method #}
@@ -98,8 +110,6 @@ button#record_observation {
     width: 600px;
     height: 50px;
 
-    border-radius: 15%;
-
     color:yellow;
     background: #229922;
 }
@@ -123,44 +133,21 @@ button#record_observation {
 
     <tr>
       <th>
-	Target
-      <th>
-    </tr>
-
-    <tr>
-      <th>
-	Name
+	Target Name
       </th>
 
       <td>
-	<input type="text" id="_target" name="Target">
+	<input type="text" id="_target" name="Target" >
       </td>
 
-      <td colspan="2">Jupiter, Saturn et al.</td>
-
-    </tr>
-
-    <tr>
       <th>
 	Coordinates
-      <th>
-    </tr>
+      </th>
 
-    <tr>
-      <td colspan="2">
-	<a href="https://en.wikipedia.org/wiki/Equatorial_coordinate_system">Equatorial Coordinates</a>
+      <td>
+	<input type="radio" name="observer_coords" value="radec" id="radec_button" checked>RA/dec
+	<input type="radio" name="observer_coords" value="azalt" id="azalt_button">Az/Alt
       </td>
-
-
-
-      <td>RA/dec radio button</td>
-      <td>Az/Alt radio button</td>
-
-
-      <td colspan="2">
-	<a href="https://en.wikipedia.org/wiki/Horizontal_coordinate_system">Horizontal Coordinates</a>
-      </td>
-
 
     </tr>
 
@@ -168,14 +155,14 @@ button#record_observation {
 
     <tr id="radec_coords" >
       <th>
-	<a href="https://en.wikipedia.org/wiki/Right_ascension">Right Ascension</a>
+	<a href="https://en.wikipedia.org/wiki/Right_ascension">RA</a>
       </th>
 
       <td>
 	<input type="text" id="_right_ascension" name="RightAscension">
       </td>
 
-      <td>hour[:min[:sec]]</td>
+      <td>hr[:min[:sec]]</td>
 
       <th>
 	<a href="https://en.wikipedia.org/wiki/Declination">Declination</a>
@@ -191,10 +178,10 @@ button#record_observation {
 
 
 
-    <tr id="azalt_coords" >
+    <tr id="azalt_coords" style="display: none;">
 
       <th>
-	Azimuth
+	<a href="https://en.wikipedia.org/wiki/Azimuth">Azimuth</a>
       </th>
 
       <td>
@@ -204,7 +191,7 @@ button#record_observation {
       <td>deg[:min[:sec]]</td>
 
       <th>
-	Altitude
+	<a href="https://en.wikipedia.org/wiki/Horizontal_coordinate_system">Altitude</a>
       </th>
 
       <td>
@@ -215,22 +202,26 @@ button#record_observation {
 
     </tr>
 
+
     <tr>
       <th>
 	Notes
       </th>
 
-      <td colspan="6">
-	<textarea rows="4" cols="90" id="_notes" name="Notes"></textarea>
+      <td colspan="5">
+	<textarea rows="8" cols="90" id="_notes" name="Notes"></textarea>
       </td>
 
     </tr>
 
+
     <tr>
-      <td colspan="7">
+      <th></th>
+      <td colspan="5">
 	<button id="record_observation">Record Observation</button>
       </td>
     </tr>
+
 
   </table>
 
