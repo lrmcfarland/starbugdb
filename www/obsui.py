@@ -6,7 +6,11 @@
 The default config file conf/obs-flask.cfg is for running inside a
 container with mongod running as starbugdb-00.
 
-To test from the local command line:
+To test from the local command line, setup a vurtial environment:
+
+source py3env/bin/activate
+
+And run:
 
 ./obsui.py -p 8888 -d -f conf/obs-flask-localhost.cfg
 

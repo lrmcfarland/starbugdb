@@ -5,7 +5,7 @@ These are scripts for creating and maintaining the starbug monogo database.
 obsui.py has the factory and main functions.
 
 
-# pre build configure
+# Initial passwords
 
 Dockerfile.mongodb will copy conf/mongo_admin_setup.sh to
 /docker-entrypoint-initdb.d/.  This file will create the initial
@@ -16,6 +16,63 @@ database, so the uri must also be updated to match. This is
 hardcoded factory input in the gobsui.py for gunicorn to find it,
 but it is a command line argument for obsui.main() and can
 be set as needed for testing.
+
+
+# Environment
+
+Setup a virtual environment for python to run from the command line for development and testing.
+
+```
+[lrm@lrmz-iMac starbugdb (master)]$ virtualenv -p /usr/local/bin/python3 py3env
+Running virtualenv with interpreter /usr/local/bin/python3
+Using base prefix '/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6'
+New python executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python3.6
+Also creating executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python
+Installing setuptools, pip, wheel...done.
+
+
+
+[lrm@lrmz-iMac starbugdb (master)]$ virtualenv -p /usr/local/bin/python3 py3env
+Running virtualenv with interpreter /usr/local/bin/python3
+Using base prefix '/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6'
+New python executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python3.6
+Also creating executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python
+Installing setuptools, pip, wheel...done.
+
+
+
+[lrm@lrmz-iMac starbugdb (master)]$ source py3env/bin/activate
+(py3env) [lrm@lrmz-iMac starbugdb (master)]$ pip install -r requirements.txt
+Collecting bcrypt (from -r requirements.txt (line 3))
+  Using cached bcrypt-3.1.4-cp36-cp36m-macosx_10_6_intel.whl
+Collecting flask (from -r requirements.txt (line 4))
+  Using cached Flask-0.12.2-py2.py3-none-any.whl
+Collecting Flask-PyMongo (from -r requirements.txt (line 5))
+  Using cached Flask_PyMongo-0.5.1-py3-none-any.whl
+Collecting Flask-Login (from -r requirements.txt (line 6))
+Collecting gunicorn (from -r requirements.txt (line 7))
+  Using cached gunicorn-19.7.1-py2.py3-none-any.whl
+Collecting six>=1.4.1 (from bcrypt->-r requirements.txt (line 3))
+  Using cached six-1.11.0-py2.py3-none-any.whl
+Collecting cffi>=1.1 (from bcrypt->-r requirements.txt (line 3))
+  Using cached cffi-1.11.4-cp36-cp36m-macosx_10_6_intel.whl
+Collecting Werkzeug>=0.7 (from flask->-r requirements.txt (line 4))
+  Using cached Werkzeug-0.14.1-py2.py3-none-any.whl
+Collecting Jinja2>=2.4 (from flask->-r requirements.txt (line 4))
+  Using cached Jinja2-2.10-py2.py3-none-any.whl
+Collecting click>=2.0 (from flask->-r requirements.txt (line 4))
+  Using cached click-6.7-py2.py3-none-any.whl
+Collecting itsdangerous>=0.21 (from flask->-r requirements.txt (line 4))
+Collecting PyMongo>=2.5 (from Flask-PyMongo->-r requirements.txt (line 5))
+  Using cached pymongo-3.6.0-cp36-cp36m-macosx_10_6_intel.whl
+Collecting pycparser (from cffi>=1.1->bcrypt->-r requirements.txt (line 3))
+Collecting MarkupSafe>=0.23 (from Jinja2>=2.4->flask->-r requirements.txt (line 4))
+Installing collected packages: six, pycparser, cffi, bcrypt, Werkzeug, MarkupSafe, Jinja2, click, itsdangerous, flask, PyMongo, Flask-PyMongo, Flask-Login, gunicorn
+Successfully installed Flask-Login-0.4.1 Flask-PyMongo-0.5.1 Jinja2-2.10 MarkupSafe-1.0 PyMongo-3.6.0 Werkzeug-0.14.1 bcrypt-3.1.4 cffi-1.11.4 click-6.7 flask-0.12.2 gunicorn-19.7.1 itsdangerous-0.24 pycparser-2.18 six-1.11.0
+
+```
+
+
 
 # build
 
