@@ -9,6 +9,7 @@ import flask_login
 import flask_pymongo
 import json
 import re
+import requests
 
 import model
 
@@ -64,12 +65,7 @@ def info():
 def record_observation_api():
     """Record an observation
 
-    TODO use aai /lat,lon,dec,ra2decimal, /datetime2iso8601
-         python3 for timezone? or coords.datemtime
-
-    TODO python3 supports timezone %z, this is a work around
-    TODO decimal time, fractional timezones
-    TODO use aai api to parse
+    Sets the schema for the observations table
     """
 
     result = dict()
@@ -81,31 +77,26 @@ def record_observation_api():
 
     try:
 
-        obs = json.loads(flask.request.get_data())
-        as_iso8601 = ''.join([obs['date'], 'T', obs['time']])
-
-        # TODO regex
-        if '.' in as_iso8601:
-            obs_datetime = datetime.datetime.strptime(as_iso8601, '%Y-%m-%dT%H:%M:%S.%f') # decimal seconds
-        else:
-            obs_datetime = datetime.datetime.strptime(as_iso8601, '%Y-%m-%dT%H:%M:%S')
-
-        tz_found = timezone_re.match(obs['timezone'])
-        if not tz_found:
-            result['error'] = 'timezone {} is in an unsupported format. It must be [+/-]hhmm'.format(obs['timezone'])
-            return flask.jsonify(**result)
-
-        obs_datetime += datetime.timedelta(hours=int(obs['timezone']))
-
-        obs['datetime'] = obs_datetime
-
         obsdb = model.mongo.db['observations']
 
-        res = obsdb.insert(obs)
+        obs = json.loads(flask.request.get_data())
+
+
+        res = obsdb.insert({'iso8601': obs['iso8601'], # TODO datetime type
+                            'observer':obs['observer'],
+                            'latitude': float(obs['latitude']),
+                            'longitude': float(obs['longitude']),
+                            'target': obs['target'],
+                            'ra': float(obs['ra']),
+                            'dec': float(obs['dec']),
+                            'notes': obs['notes'],
+                        }
+        )
+
 
         result['status'] = 'success %s' % res # TODO meh
 
-    except ValueError as err:
+    except (AttributeError, ValueError) as err:
         result['error'] = 'Error: {}.'.format(err)
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
@@ -121,7 +112,7 @@ def show_observations_api():
     TODO find criteria
     """
 
-    result = dict()
+    result = {'data': list(), 'errors': list()}
 
     try:
         obsdb = model.mongo.db['observations']
@@ -132,17 +123,46 @@ def show_observations_api():
             try:
                 result['data'].append({'observer':obs['observer'],
                                        'target':obs['target'],
-                                       'date':obs['date'],
-                                       'time':obs['time'],
+                                       'iso8601':obs['iso8601'],
                                        'ra':  obs['ra'],
                                        'dec': obs['dec'],
                                        'notes': obs['notes']})
             except KeyError as err:
-                result['data'] = str(err)
+                result['errors'].append(str(err))
 
         result['status'] = 'success' # TODO meh
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
+        result['error'] = str(err)
+
+    return flask.jsonify(**result)
+
+
+@api.route("/standardize")
+def standardize():
+    """Return starbug.com standard format of observation parameters
+
+    For example, 30:30 to 30.5
+
+    This is to store values as floats not strings.
+    Uses AAI's api for parsing
+    """
+
+    result = dict()
+
+    try:
+
+        result['args'] = flask.request.args # {"alt":"30:30","az":"","date":"2018-02-26", ... "time":"20:32:30"},
+
+        aai_result = requests.get('{}/api/v1/standardize'.format(flask.current_app.config['AAI_URI']), params=flask.request.args)
+        result['standard'] = aai_result.json()
+
+        result['AAI_URI'] = flask.current_app.config['AAI_URI']
+
+    except Exception as err: # TODO be more specific
+
+        # TODO log errors
+
         result['error'] = str(err)
 
     return flask.jsonify(**result)

@@ -39,7 +39,7 @@
 
       $("#record_observation").click(function(e) {
 
-	var observation = JSON.stringify(
+	var observation =
 	  {
 	    "observer": "{{ current_user.username }}",
 	    "latitude": $('input[name="latitude"]').val(),
@@ -47,36 +47,61 @@
 	    "date": $('input[name="date"]').val(),
 	    "time": $('input[name="time"]').val(),
 	    "timezone": $('input[name="timezone"]').val(),
-	    "dst": $("#_dst").is(':checked'), {# jQuery selector #}
+	    "dst": $("#_dst").is(':checked'),
 
 	    "target": $('input[name="Target"]').val(),
-
-	    {# TODO convert from az alt if needed #}
 
 	    "ra": $('input[name="RightAscension"]').val(),
 	    "dec": $('input[name="Declination"]').val(),
 
-	    {# TODO include photos #}
+	    "azalt": $("#azalt_button").is(':checked'),
+	    "az": $('input[name="Azimuth"]').val(),
+	    "alt": $('input[name="Altitude"]').val(),
 
 	    "notes": $('textarea[name="Notes"]').val()
 
-	  });
+	  };
 
-	$.post($SCRIPT_ROOT + "/api/v1/record_observation", observation,
-	  function(record_result) {
 
-	    if ("error" in record_result) {
-	      alert("Error: " + record_result.error);
-	    } else {
+        $.getJSON($SCRIPT_ROOT + "/api/v1/standardize", observation,
+          function(stddata) {
 
-	      {# TODO clear az alt for next #}
+	    console.log("standardized data:" + JSON.stringify(stddata)); {# TODO debug? #}
 
-	      $('input[name="RightAscension"]').val("")
-	      $('input[name="Declination"]').val("")
-	      $('textarea[name="Notes"]').val("")
-	    };
+	    alert(JSON.stringify(stddata)); {# TODO rm #}
 
-	  }); {# end post #}
+            {# TODO check for errors show warnings #}
+
+            var obs_data = stddata["standard"]["params"];
+            obs_data["observer"] = "{{ current_user.username }}";
+            obs_data["target"] = $('input[name="Target"]').val();
+            obs_data["notes"] = $('textarea[name="Notes"]').val();
+
+            $.post($SCRIPT_ROOT + "/api/v1/record_observation", JSON.stringify(obs_data),
+
+	      function(record_result) {
+
+                if ("error" in record_result) {
+	          alert(record_result.error);
+
+	        } else {
+
+                  $('input[name="Azimuth"]').val("")
+                  $('input[name="Altitude"]').val("")
+                  $('input[name="RightAscension"]').val("")
+                  $('input[name="Declination"]').val("")
+	          $('textarea[name="Notes"]').val("")
+	        };
+
+            }); {# end post #}
+
+
+        })
+        .fail(function(jqxhr, textStatus, error) {
+	  var err = "record observation fail" + textStatus + ", " + error + ", " + jqxhr.responseText;
+	  alert(err); {# TODO continue with out standardization dialog #}
+        });
+
 
 
 	return false;
