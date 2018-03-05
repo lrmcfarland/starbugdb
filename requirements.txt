@@ -1,8 +1,9 @@
-# pip install
+# pip install -r requirements.txt
 
 bcrypt
 flask
 Flask-PyMongo
 Flask-Login
 gunicorn
-
+python-dateutil
+requests

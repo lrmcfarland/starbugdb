@@ -20,16 +20,16 @@
       {# ----- toggle radec coords ----- #}
 
       $("#radec_button").click(function(e) {
-	$("#radec_coords").show();
-	$("#azalt_coords").hide();
+        $("#radec_coords").show();
+        $("#azalt_coords").hide();
       }); {# end radec_button click #}
 
 
       {# ----- toggle azalt coords ----- #}
 
       $("#azalt_button").click(function(e) {
-	$("#azalt_coords").show();
-	$("#radec_coords").hide();
+        $("#azalt_coords").show();
+        $("#radec_coords").hide();
       }); {# end azalt_button click #}
 
 
@@ -39,47 +39,75 @@
 
       $("#record_observation").click(function(e) {
 
-	var observation = JSON.stringify(
-	  {
-	    "observer": "{{ current_user.username }}",
-	    "latitude": $('input[name="latitude"]').val(),
-	    "longitude": $('input[name="longitude"]').val(),
-	    "date": $('input[name="date"]').val(),
-	    "time": $('input[name="time"]').val(),
-	    "timezone": $('input[name="timezone"]').val(),
-	    "dst": $("#_dst").is(':checked'), {# jQuery selector #}
+        var observation =
+          {
+            "observer": "{{ current_user.username }}",
+            "latitude": $('input[name="latitude"]').val(),
+            "longitude": $('input[name="longitude"]').val(),
+            "date": $('input[name="date"]').val(),
+            "time": $('input[name="time"]').val(),
+            "timezone": $('input[name="timezone"]').val(),
+            "dst": $("#_dst").is(':checked'),
 
-	    "target": $('input[name="Target"]').val(),
+            "target": $('input[name="Target"]').val(),
 
-	    {# TODO convert from az alt if needed #}
+            "ra": $('input[name="RightAscension"]').val(),
+            "dec": $('input[name="Declination"]').val(),
 
-	    "ra": $('input[name="RightAscension"]').val(),
-	    "dec": $('input[name="Declination"]').val(),
+            "azalt": $("#azalt_button").is(':checked'),
+            "az": $('input[name="Azimuth"]').val(),
+            "alt": $('input[name="Altitude"]').val(),
 
-	    {# TODO include photos #}
+            "notes": $('textarea[name="Notes"]').val()
 
-	    "notes": $('textarea[name="Notes"]').val()
-
-	  });
-
-	$.post($SCRIPT_ROOT + "/api/v1/record_observation", observation,
-	  function(record_result) {
-
-	    if ("error" in record_result) {
-	      alert("Error: " + record_result.error);
-	    } else {
-
-	      {# TODO clear az alt for next #}
-
-	      $('input[name="RightAscension"]').val("")
-	      $('input[name="Declination"]').val("")
-	      $('textarea[name="Notes"]').val("")
-	    };
-
-	  }); {# end post #}
+          };
 
 
-	return false;
+        $.getJSON($SCRIPT_ROOT + "/api/v1/standardize", observation,
+          function(stddata) {
+
+            console.log("standardized data:" + JSON.stringify(stddata)); {# TODO debug? #}
+
+            if (stddata.error) {
+
+              alert(stddata.error);
+
+            } else {
+
+              var obs_data = stddata["standard"]["params"];
+              obs_data["observer"] = "{{ current_user.username }}";
+              obs_data["target"] = $('input[name="Target"]').val();
+              obs_data["notes"] = $('textarea[name="Notes"]').val();
+
+              $.post($SCRIPT_ROOT + "/api/v1/record_observation", JSON.stringify(obs_data),
+
+                function(record_result) {
+
+                  if ("error" in record_result) {
+
+                    alert(record_result.error);
+
+                  } else {
+
+                    alert(record_result.status);
+
+                    $('input[name="Azimuth"]').val("")
+                    $('input[name="Altitude"]').val("")
+                    $('input[name="RightAscension"]').val("")
+                    $('input[name="Declination"]').val("")
+                    $('textarea[name="Notes"]').val("")
+                  };
+
+              }); {# end post #}
+
+            }; {# end if stddata.error #}
+        })
+        .fail(function(jqxhr, textStatus, error) {
+          var err = "record observation fail" + textStatus + ", " + error + ", " + jqxhr.responseText;
+          alert(err);
+        });
+
+        return false;
 
       }); {# end record observation click #}
 
@@ -133,22 +161,22 @@ button#record_observation {
 
     <tr>
       <th>
-	Target Name
+        Target Name
       </th>
 
       <td>
-	<input type="text" id="_target" name="Target" >
+        <input type="text" id="_target" name="Target" >
       </td>
 
       <td></td>
 
       <th>
-	Coordinates
+        Coordinates
       </th>
 
       <td>
-	<input type="radio" name="observer_coords" value="radec" id="radec_button" checked>RA/dec
-	<input type="radio" name="observer_coords" value="azalt" id="azalt_button">Az/Alt
+        <input type="radio" name="observer_coords" value="radec" id="radec_button" checked>RA/dec
+        <input type="radio" name="observer_coords" value="azalt" id="azalt_button">Az/Alt
       </td>
 
     </tr>
@@ -157,21 +185,21 @@ button#record_observation {
 
     <tr id="radec_coords" >
       <th>
-	<a href="https://en.wikipedia.org/wiki/Right_ascension">RA</a>
+        <a href="https://en.wikipedia.org/wiki/Right_ascension">RA</a>
       </th>
 
       <td>
-	<input type="text" id="_right_ascension" name="RightAscension">
+        <input type="text" id="_right_ascension" name="RightAscension">
       </td>
 
       <td>hr[:min[:sec]]</td>
 
       <th>
-	<a href="https://en.wikipedia.org/wiki/Declination">Declination</a>
+        <a href="https://en.wikipedia.org/wiki/Declination">Declination</a>
       </th>
 
       <td>
-	<input type="text" id="_declination" name="Declination">
+        <input type="text" id="_declination" name="Declination">
       </td>
 
       <td>deg[:min[:sec]]</td>
@@ -183,21 +211,21 @@ button#record_observation {
     <tr id="azalt_coords" style="display: none;">
 
       <th>
-	<a href="https://en.wikipedia.org/wiki/Azimuth">Azimuth</a>
+        <a href="https://en.wikipedia.org/wiki/Azimuth">Azimuth</a>
       </th>
 
       <td>
-	<input type="text" id="_azimuth" name="Azimuth">
+        <input type="text" id="_azimuth" name="Azimuth">
       </td>
 
       <td>deg[:min[:sec]]</td>
 
       <th>
-	<a href="https://en.wikipedia.org/wiki/Horizontal_coordinate_system">Altitude</a>
+        <a href="https://en.wikipedia.org/wiki/Horizontal_coordinate_system">Altitude</a>
       </th>
 
       <td>
-	<input type="text" id="_altitude" name="Altitude">
+        <input type="text" id="_altitude" name="Altitude">
       </td>
 
       <td>deg[:min[:sec]]</td>
@@ -207,11 +235,11 @@ button#record_observation {
 
     <tr>
       <th>
-	Notes
+        Notes
       </th>
 
       <td colspan="5">
-	<textarea rows="8" cols="90" id="_notes" name="Notes"></textarea>
+        <textarea rows="8" cols="90" id="_notes" name="Notes"></textarea>
       </td>
 
     </tr>
@@ -220,7 +248,7 @@ button#record_observation {
     <tr>
       <th></th>
       <td colspan="5">
-	<button id="record_observation">Record Observation</button>
+        <button id="record_observation">Record Observation</button>
       </td>
     </tr>
 
