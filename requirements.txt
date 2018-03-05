@@ -5,4 +5,5 @@ flask
 Flask-PyMongo
 Flask-Login
 gunicorn
+python-dateutil
 requests

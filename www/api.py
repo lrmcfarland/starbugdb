@@ -4,6 +4,7 @@
 """obsevations api"""
 
 import datetime
+import dateutil.parser
 import flask
 import flask_login
 import flask_pymongo
@@ -82,7 +83,8 @@ def record_observation_api():
         obs = json.loads(flask.request.get_data())
 
 
-        res = obsdb.insert({'iso8601': obs['iso8601'], # TODO datetime type
+        res = obsdb.insert({'iso8601': obs['iso8601'],
+                            'isodate': dateutil.parser.parse(obs['iso8601']),
                             'observer':obs['observer'],
                             'latitude': float(obs['latitude']),
                             'longitude': float(obs['longitude']),
@@ -94,13 +96,16 @@ def record_observation_api():
         )
 
 
-        result['status'] = 'success %s' % res # TODO meh
+        result['status'] = 'successfully recorded'
 
-    except (AttributeError, ValueError) as err:
-        result['error'] = 'Error: {}.'.format(err)
+    except (AttributeError, KeyError, ValueError) as err:
+        result['error'] = 'Request Data Error: {}.'.format(err)
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
-        result['error'] = 'Operation Failure: {}'.format(err)
+        result['error'] = 'Mongo Operation Failure: {}'.format(err)
+
+    except Exception as err:
+        result['error'] = 'Exception: {}'.format(err)
 
     return flask.jsonify(**result)
 
@@ -130,10 +135,10 @@ def show_observations_api():
             except KeyError as err:
                 result['errors'].append(str(err))
 
-        result['status'] = 'success' # TODO meh
+        result['status'] = 'success'
 
     except flask_pymongo.pymongo.errors.OperationFailure as err:
-        result['error'] = str(err)
+        result['errors'].append(str(err))
 
     return flask.jsonify(**result)
 
