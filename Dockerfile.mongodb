@@ -1,10 +1,10 @@
 # mongodb
 #
-# persistent storage:  docker volume create starbug-data
+# persistent storage:  docker volume create starbugdata
 #
 # to build:            docker build -f Dockerfile.mongodb -t starbugdb .
 #
-# to run:              docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
+# to run:              docker run --net starbugnet --mount source=starbugdata,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
 #
 # This will add auth with the admin, root and starbug users in
 # /docker-entrypoint-initdb.d/mongo_admin_setup.sh.  Edit passwords

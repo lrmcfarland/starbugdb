@@ -3,18 +3,20 @@
 # This will build the flask observation interface served by gunicorn
 # for use with nginx as a reverse proxy.
 #
+# Assmues: starbug.com container rotates all logs and log name is unique. See CMD below.
+#
 # see Dockerfile.mongodb for details about how to set that up
 #
 # one time setup
-# persistent storage:  docker volume create aai-logs
+# persistent storage:  docker volume create starbuglogs
 # create network:      docker network create starbugnet
 #
 #
 # to build:            docker build -f Dockerfile.obsui -t obsui-gunicorn .
 #
-# to run:              docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
+# to run:              docker run --net starbugnet --name obsui-gunicorn-00 --mount source=starbuglogs,target=/opt/starbug.com/logs -d -p 8090:8090 obsui-gunicorn
 #
-# to bash obsui-logs:  docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn --user root --entrypoint /bin/bash obsui-gunicorn
+# to bash obsui-logs:  docker run -it --rm --mount source=starbuglogs,target=/opt/starbug.com/logs --user root --entrypoint /bin/bash obsui-gunicorn
 #
 # to stop:                   docker stop obsui-gunicorn-00
 # to delete container:       docker rm obsui-gunicorn-00
@@ -44,7 +46,7 @@ ENV STARBUG_HOME="/opt/starbug.com/" \
 
 RUN groupadd ${STARBUG_GRP} \
     && adduser -g ${STARBUG_GRP} ${STARBUG_USER} \
-    && mkdir -p ${STARBUG_HOME}/logs/gunicorn \
+    && mkdir -p ${STARBUG_HOME}/logs \
     && mkdir -p ${OBSUI_HOME} \
     && chown -R ${STARBUG_USER}:${STARBUG_GRP} ${STARBUG_HOME}
 
@@ -59,6 +61,6 @@ WORKDIR ${OBSUI_HOME}/www
 
 CMD [ "gunicorn", "gobsui:app", "-b", "0.0.0.0:8090", \
       "-w", "4", "--capture-output", "--log-level", "info", \
-      "--access-logfile", "/opt/starbug.com/logs/gunicorn/gobsui-gunicorn-access.log", \
-      "--error-logfile",  "/opt/starbug.com/logs/gunicorn/gobsui-gunicorn-error.log", \
+      "--access-logfile", "/opt/starbug.com/logs/gobsui-access.log", \
+      "--error-logfile",  "/opt/starbug.com/logs/gobsui-error.log", \
       "--forwarded-allow-ips", "*"]
