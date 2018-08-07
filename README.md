@@ -164,6 +164,7 @@ todo
 
 ## create a dump
 
+```
 
 $ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --mount source=starbugbackup,target=/opt/starbug.com/backup mongo bash -c 'mongodump --out /opt/starbug.com/backup/starbugdbdump --host starbugdb-00:27017'
 2018-08-01T06:00:15.465+0000	writing admin.system.users to 
@@ -174,7 +175,7 @@ $ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --
 2018-08-01T06:00:15.467+0000	writing starbug.users to 
 2018-08-01T06:00:15.468+0000	done dumping starbug.observations (43 documents)
 2018-08-01T06:00:15.469+0000	done dumping starbug.users (2 documents)
-
+```
 
 
 ### create a tar ball in container
