@@ -74,23 +74,46 @@ Successfully installed Flask-Login-0.4.1 Flask-PyMongo-0.5.1 Jinja2-2.10 MarkupS
 
 
 
-# build
+
+# mongodb
+
 
 ## database storage
 
-One time setup
+One time setup. This will also be implicitly created from the command line.
 
 ```
-docker volume create starbug-data
+docker volume create starbugdata
+docker volume create starbugbackup
 ```
 
-## starbugdb docker image
+## build docker image
+
+```
+docker build -f Dockerfile.mongodb -t starbugdb .
+```
+
+## run mongodb
+
+with persistant volumes starbugdata for data storage and starbugbackup for temporary backup storage.
+
+```
+docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb-00 -d -p 27017:27017 lrmcfarland/starbugdb
+```
+
+
+
+
+# Gunicorn UI
+
+
+## build docker image
 
 ```
 docker build -f Dockerfile.obsui -t obsui-gunicorn .
 ```
 
-### run
+## run gunicorn
 
 ```
 docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
@@ -99,7 +122,7 @@ docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,tar
 to open a bash to look the logs:
 
 ```
-docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn --user root --entrypoint /bin/bash obsui-gunicorn
+docker exec -it obsui-gunicorn bash
 ```
 
 ## obsui-gunicorn docker image
@@ -107,19 +130,6 @@ docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicor
 ```
 docker build -f Dockerfile.obsui -t obsui-gunicorn .
 ```
-
-### run
-
-```
-docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
-```
-
-to open a bash to look the logs:
-
-```
-docker run -it --rm --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn --user root --entrypoint /bin/bash obsui-gunicorn
-```
-
 
 
 # Add users
@@ -147,25 +157,44 @@ $ ./add_user.py -u lister -p changeme -w
 
 todo
 
-# Dump
 
-Needs to be done as root
+
+# Backup
+
+
+## create a dump
+
+
+$ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --mount source=starbugbackup,target=/opt/starbug.com/backup mongo bash -c 'mongodump --out /opt/starbug.com/backup/starbugdbdump --host starbugdb-00:27017'
+2018-08-01T06:00:15.465+0000	writing admin.system.users to 
+2018-08-01T06:00:15.466+0000	done dumping admin.system.users (3 documents)
+2018-08-01T06:00:15.466+0000	writing admin.system.version to 
+2018-08-01T06:00:15.467+0000	done dumping admin.system.version (2 documents)
+2018-08-01T06:00:15.467+0000	writing starbug.observations to 
+2018-08-01T06:00:15.467+0000	writing starbug.users to 
+2018-08-01T06:00:15.468+0000	done dumping starbug.observations (43 documents)
+2018-08-01T06:00:15.469+0000	done dumping starbug.users (2 documents)
+
+
+
+### create a tar ball in container
 
 ```
-$ mongodump -u starbug -p changeme3 --authenticationDatabase starbug --out starbugdb_dump
-2017-12-27T20:10:49.949-0800	positional arguments not allowed: [starbug]
-2017-12-27T20:10:49.949-0800	try 'mongodump --help' for more information
-(pyenv) [lrm@lrmz-iMac starbugdb (adds-flask-v4)]$ mongodump -u root -p changemetoo --authenticationDatabase admin --out dump
-2017-12-27T20:11:01.829-0800	writing admin.system.users to
-2017-12-27T20:11:01.836-0800	done dumping admin.system.users (4 documents)
-2017-12-27T20:11:01.836-0800	writing admin.system.version to
-2017-12-27T20:11:01.842-0800	done dumping admin.system.version (2 documents)
-2017-12-27T20:11:01.842-0800	writing starbug.observations to
-2017-12-27T20:11:01.849-0800	done dumping starbug.observations (7 documents)
+$ docker exec -it starbugdb-00 bash
+
+# cd /opt/starbug.com/backup/
+
+# tar cvzf starbugdbdump.tgz starbugdbdump
 
 ```
 
-Dumps in ./dump by default with out --out arg
+
+### copy tar ball to VM
+
+```
+$ docker cp starbugdb-00:/opt/starbug.com/backup/starbugdbdump.tgz ./
+
+```
 
 
 # Restore

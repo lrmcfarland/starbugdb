@@ -4,7 +4,7 @@
 #
 # to build:            docker build -f Dockerfile.mongodb -t starbugdb .
 #
-# to run:              docker run --net starbugnet --mount source=starbugdata,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
+# to run:              docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb-00 -d -p 27017:27017 lrmcfarland/starbugdb
 #
 # This will add auth with the admin, root and starbug users in
 # /docker-entrypoint-initdb.d/mongo_admin_setup.sh.  Edit passwords
