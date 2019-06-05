@@ -12,15 +12,15 @@
 # create network:      docker network create starbugnet
 #
 #
-# to build:            docker build -f Dockerfile.obsui -t obsui-gunicorn .
+# to build:            docker build -f Dockerfile.obsui -t obsui .
 #
-# to run:              docker run --net starbugnet --name obsui-gunicorn-00 --mount source=starbuglogs,target=/opt/starbug.com/logs -d -p 8090:8090 obsui-gunicorn
+# to run:              docker run --net starbugnet --name obsui_00 --mount source=starbuglogs,target=/opt/starbug.com/logs -d -p 8090:8090 obsui
 #
-# to bash obsui-logs:  docker run -it --rm --mount source=starbuglogs,target=/opt/starbug.com/logs --user root --entrypoint /bin/bash obsui-gunicorn
+# to bash obsui_logs:  docker exec -it obsui_00 /bin/bash
 #
-# to stop:                   docker stop obsui-gunicorn-00
-# to delete container:       docker rm obsui-gunicorn-00
-# to delete image:           docker rmi obsui-gunicorn
+# to stop:                   docker stop obsui_00
+# to delete container:       docker rm obsui_00
+# to delete image:           docker rmi obsui
 
 FROM centos
 

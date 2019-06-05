@@ -98,7 +98,7 @@ docker build -f Dockerfile.mongodb -t starbugdb .
 with persistant volumes starbugdata for data storage and starbugbackup for temporary backup storage.
 
 ```
-docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb-00 -d -p 27017:27017 lrmcfarland/starbugdb
+docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb_00 -d -p 27017:27017 lrmcfarland/starbugdb
 ```
 
 
@@ -116,7 +116,7 @@ docker build -f Dockerfile.obsui -t obsui-gunicorn .
 ## run gunicorn
 
 ```
-docker run --net starbugnet --name obsui-gunicorn-00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
+docker run --net starbugnet --name obsui-gunicorn_00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
 ```
 
 to open a bash to look the logs:
@@ -166,7 +166,7 @@ todo
 
 ```
 
-$ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --mount source=starbugbackup,target=/opt/starbug.com/backup mongo bash -c 'mongodump --out /opt/starbug.com/backup/starbugdbdump --host starbugdb-00:27017'
+$ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --mount source=starbugbackup,target=/opt/starbug.com/backup mongo bash -c 'mongodump --out /opt/starbug.com/backup/starbugdbdump --host starbugdb_00:27017'
 2018-08-01T06:00:15.465+0000	writing admin.system.users to 
 2018-08-01T06:00:15.466+0000	done dumping admin.system.users (3 documents)
 2018-08-01T06:00:15.466+0000	writing admin.system.version to 
@@ -181,7 +181,7 @@ $ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --
 ### create a tar ball in container
 
 ```
-$ docker exec -it starbugdb-00 bash
+$ docker exec -it starbugdb_00 bash
 
 # cd /opt/starbug.com/backup/
 
@@ -193,7 +193,7 @@ $ docker exec -it starbugdb-00 bash
 ### copy tar ball to VM
 
 ```
-$ docker cp starbugdb-00:/opt/starbug.com/backup/starbugdbdump.tgz ./
+$ docker cp starbugdb_00:/opt/starbug.com/backup/starbugdbdump.tgz ./
 
 ```
 
@@ -203,7 +203,7 @@ $ docker cp starbugdb-00:/opt/starbug.com/backup/starbugdbdump.tgz ./
 Start mongo with out auth to load dump for the first time on an empty database
 
 ```
-$ docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb
+$ docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb_00 -d -p 27017:27017 starbugdb
 
 $ mongorestore --drop dump
 2017-12-27T20:18:33.221-0800	preparing collections to restore from
@@ -220,7 +220,7 @@ But the database is open:
 
 ```
 
-$ docker exec -it starbugdb-00 mongo admin
+$ docker exec -it starbugdb_00 mongo admin
 MongoDB shell version v3.6.0
 connecting to: mongodb://127.0.0.1:27017/admin
 
@@ -237,10 +237,10 @@ observations
 Clear the image and restart with auth
 
 ```
-$ docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb-00 -d -p 27017:27017 starbugdb --auth
+$ docker run --net starbugnet --mount source=starbug-data,target=/data/db --name starbugdb_00 -d -p 27017:27017 starbugdb --auth
 
 
-$ docker exec -it starbugdb-00 mongo admin
+$ docker exec -it starbugdb_00 mongo admin
 > use starbug;
 switched to db starbug
 > show tables;
@@ -299,11 +299,11 @@ switched to db starbug
 # to clean up
 
 ```
-$ docker stop starbugdb-00
-starbugdb-00
+$ docker stop starbugdb_00
+starbugdb_00
 
-$ docker rm starbugdb-00
-starbugdb-00
+$ docker rm starbugdb_00
+starbugdb_00
 
 $ docker volume prune
 WARNING! This will remove all volumes not used by at least one container.

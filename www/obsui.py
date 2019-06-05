@@ -3,8 +3,8 @@
 
 """Flask UI for the starbug observation database
 
-The default config file conf/obs-flask.cfg is for running inside a
-container with mongod running as starbugdb-00.
+The default config file conf/obsui.cfg is for running inside a
+container with mongod running as starbugdb_00.
 
 To test from the local command line, setup a vurtial environment:
 
@@ -12,7 +12,11 @@ source py3env/bin/activate
 
 And run:
 
-./obsui.py -p 8888 -d -f conf/obs-flask-localhost.cfg
+./obsui.py -d -f conf/obsui_localhost.cfg
+
+with aai.starbug.com
+
+./obsui.py -d -f conf/obsui_starbug.cfg
 
 
 Reference:
@@ -84,10 +88,10 @@ def load_user(user_id):
 
 if __name__ == "__main__":
 
-    defaults = {'config': 'conf/obs-flask.cfg',
+    defaults = {'config': 'conf/obsui_starbug.cfg',
                 'debug': False,
                 'host':'0.0.0.0',
-                'port': 8080}
+                'port': 8090}
 
 
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
