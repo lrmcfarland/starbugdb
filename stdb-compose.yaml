@@ -1,0 +1,44 @@
+# deploys the starbugdb continers
+#
+#
+#
+# docker-compose -f stdb-compose.yaml up -d
+# docker-compose -f stdb-compose.yaml ps
+# docker-compose -f stdb-compose.yaml down
+
+version: '3'
+
+services:
+
+  starbugdb:
+    image: starbugdb
+    container_name: starbugdb_00
+    restart: always
+    networks:
+      - starbugnet
+    ports:
+      - "27017:27017"
+    volumes:
+      - starbugdata:/data/db
+      - starbuglogs:/opt/starbug.com/logs
+
+  starbugui:
+    image: obsui
+    container_name: obsui_00
+    restart: always
+    networks:
+      - starbugnet
+    ports:
+      - "8090:8090"
+    volumes:
+      - starbuglogs:/opt/starbug.com/logs
+
+networks:
+  starbugnet:
+
+# persistent storage
+volumes:
+  starbugdata:
+    external: true
+  starbuglogs:
+    external: true
