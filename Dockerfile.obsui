@@ -1,4 +1,4 @@
-# This is the flask interface to the starbug.com mongodb database
+# This is the flask interface to the starbug.com observation database
 #
 # This will build the flask observation interface served by gunicorn
 # for use with nginx as a reverse proxy.

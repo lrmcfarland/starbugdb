@@ -7,15 +7,36 @@ obsui.py has the factory and main functions.
 
 # Initial passwords
 
-Dockerfile.mongodb will copy conf/mongo_admin_setup.sh to
-/docker-entrypoint-initdb.d/.  This file will create the initial
-mongodb users admin, root and starbug.  It also contains their initial
-passwords as examples that should be changed before building. The
-conf/obs-flask.cfg file uses the starbug account to access the
-database, so the uri must also be updated to match. This is
-hardcoded factory input in the gobsui.py for gunicorn to find it,
-but it is a command line argument for obsui.main() and can
-be set as needed for testing.
+## database access
+
+Dockerfile.mongodb will copy
+(conf/mongo_admin_setup.sh)[https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/mongo_admin_setup.sh]
+to /docker-entrypoint-initdb.d/.  This file will create the initial
+mongodb users admin, root and starbug. It also contains their initial
+passwords as examples that should be changed when deployed to production, e.g. on persistent storage.
+
+The
+(conf/obsui_starbug.cfg)[https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/obsui_starbug.cfg]
+file contains the web server configuation information and should also changed when deployed to production.
+This must match the hard coded factory input in the
+[gobsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/gobsui.py)
+for gunicorn to find it by default, but it is a command line argument
+for obsui.main() and can be set as needed for testing.
+
+## observation access
+
+The observation ui access is separate from the database access.
+At this time you will need to use (user.py)[https://github.com/lrmcfarland/starbugdb/blob/master/www/user.py]
+to add users on the host.
+Until this is done, all user login attempts will fail as '<user> not found'.
+
+```
+
+TODO example
+
+```
+
+There is no web ui to do this at this time.
 
 
 # Environment
