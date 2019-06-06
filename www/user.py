@@ -144,17 +144,17 @@ if __name__ == '__main__':
 
         a_user = User(username=args.username, password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()))
 
-        users.insert(a_user.for_insert())
+        users.insert_one(a_user.for_insert())
+
+        print('users')
+        for user in users.find():
+            a_user = User(**user)
+            print('User: {}'.format(a_user))
+            print('User: {}'.format(repr(a_user)))
 
     except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
 
-        print('{}'.format(err))
+        print('Error: {}'.format(err))
 
-
-    print('users')
-    for user in users.find():
-        a_user = User(**user)
-        print('User: {}'.format(a_user))
-        print('User: {}'.format(repr(a_user)))
 
 print('done')
