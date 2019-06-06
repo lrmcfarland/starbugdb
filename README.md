@@ -1,183 +1,169 @@
-# starbug mongodb
+# starbug observation database
 
-These are scripts for creating and maintaining the starbug monogo database.
+These are scripts for creating and maintaining the starbug observations database.
+This consists of two containers: an observation database and a web ui to it.
 
-obsui.py has the factory and main functions.
+The first part is simply a mongodb server running in a container.
 
 
-# Initial passwords
+# Build
 
-## database access
+## mongo database
 
-Dockerfile.mongodb will copy
-(conf/mongo_admin_setup.sh)[https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/mongo_admin_setup.sh]
-to /docker-entrypoint-initdb.d/.  This file will create the initial
-mongodb users admin, root and starbug. It also contains their initial
-passwords as examples that should be changed when deployed to production, e.g. on persistent storage.
+The database image is build from
+[Dockerfile.mongodb](https://github.com/lrmcfarland/starbugdb/blob/master/Dockerfile.mongodb).
 
-The
-(conf/obsui_starbug.cfg)[https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/obsui_starbug.cfg]
-file contains the web server configuation information and should also changed when deployed to production.
-This must match the hard coded factory input in the
-[gobsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/gobsui.py)
-for gunicorn to find it by default, but it is a command line argument
-for obsui.main() and can be set as needed for testing.
-
-## observation access
-
-The observation ui access is separate from the database access.
-At this time you will need to use (user.py)[https://github.com/lrmcfarland/starbugdb/blob/master/www/user.py]
-to add users on the host.
-Until this is done, all user login attempts will fail as '<user> not found'.
+The initial user accounts are created from
+[conf/mongo_admin_setup.sh](https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/mongo_admin_setup.sh).
+Change these values before building and do not check them in.
 
 ```
-
-TODO example
-
+docker build -f Dockerfile.mongodb -t starbugdb .
 ```
 
-There is no web ui to do this at this time.
+## Observation UI
 
-
-# Environment
-
-Setup a virtual environment for python to run from the command line for development and testing.
+The web UI image is built from
+[Dockerfile.obsui](https://github.com/lrmcfarland/starbugdb/blob/master/Dockerfile.obsui).
 
 ```
-[lrm@lrmz-iMac starbugdb (master)]$ virtualenv -p /usr/local/bin/python3 py3env
-Running virtualenv with interpreter /usr/local/bin/python3
-Using base prefix '/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6'
-New python executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python3.6
-Also creating executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python
-Installing setuptools, pip, wheel...done.
+docker build -f Dockerfile.obsui -t obsui .
+```
+
+# Deploy
+
+## docker compose
 
 
+```
+docker-compose -f stdb-compose.yaml up -d
 
-[lrm@lrmz-iMac starbugdb (master)]$ virtualenv -p /usr/local/bin/python3 py3env
-Running virtualenv with interpreter /usr/local/bin/python3
-Using base prefix '/usr/local/Cellar/python3/3.6.4_2/Frameworks/Python.framework/Versions/3.6'
-New python executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python3.6
-Also creating executable in /Users/lrm/src/starbug/starbugdb/py3env/bin/python
-Installing setuptools, pip, wheel...done.
+docker-compose -f stdb-compose.yaml ps
 
-
-
-[lrm@lrmz-iMac starbugdb (master)]$ source py3env/bin/activate
-(py3env) [lrm@lrmz-iMac starbugdb (master)]$ pip install -r requirements.txt
-Collecting bcrypt (from -r requirements.txt (line 3))
-  Using cached bcrypt-3.1.4-cp36-cp36m-macosx_10_6_intel.whl
-Collecting flask (from -r requirements.txt (line 4))
-  Using cached Flask-0.12.2-py2.py3-none-any.whl
-Collecting Flask-PyMongo (from -r requirements.txt (line 5))
-  Using cached Flask_PyMongo-0.5.1-py3-none-any.whl
-Collecting Flask-Login (from -r requirements.txt (line 6))
-Collecting gunicorn (from -r requirements.txt (line 7))
-  Using cached gunicorn-19.7.1-py2.py3-none-any.whl
-Collecting six>=1.4.1 (from bcrypt->-r requirements.txt (line 3))
-  Using cached six-1.11.0-py2.py3-none-any.whl
-Collecting cffi>=1.1 (from bcrypt->-r requirements.txt (line 3))
-  Using cached cffi-1.11.4-cp36-cp36m-macosx_10_6_intel.whl
-Collecting Werkzeug>=0.7 (from flask->-r requirements.txt (line 4))
-  Using cached Werkzeug-0.14.1-py2.py3-none-any.whl
-Collecting Jinja2>=2.4 (from flask->-r requirements.txt (line 4))
-  Using cached Jinja2-2.10-py2.py3-none-any.whl
-Collecting click>=2.0 (from flask->-r requirements.txt (line 4))
-  Using cached click-6.7-py2.py3-none-any.whl
-Collecting itsdangerous>=0.21 (from flask->-r requirements.txt (line 4))
-Collecting PyMongo>=2.5 (from Flask-PyMongo->-r requirements.txt (line 5))
-  Using cached pymongo-3.6.0-cp36-cp36m-macosx_10_6_intel.whl
-Collecting pycparser (from cffi>=1.1->bcrypt->-r requirements.txt (line 3))
-Collecting MarkupSafe>=0.23 (from Jinja2>=2.4->flask->-r requirements.txt (line 4))
-Installing collected packages: six, pycparser, cffi, bcrypt, Werkzeug, MarkupSafe, Jinja2, click, itsdangerous, flask, PyMongo, Flask-PyMongo, Flask-Login, gunicorn
-Successfully installed Flask-Login-0.4.1 Flask-PyMongo-0.5.1 Jinja2-2.10 MarkupSafe-1.0 PyMongo-3.6.0 Werkzeug-0.14.1 bcrypt-3.1.4 cffi-1.11.4 click-6.7 flask-0.12.2 gunicorn-19.7.1 itsdangerous-0.24 pycparser-2.18 six-1.11.0
+docker-compose -f stdb-compose.yaml down
 
 ```
 
 
+## docker cli
 
 
-# mongodb
+To deploy with out docker compose
 
+### starbug database
 
-## database storage
+```
+docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb_00 -d -p 27017:27017 lrmcfarland/starbugdb
+```
 
-One time setup. This will also be implicitly created from the command line.
+This will create the starbugdata and starbugbackup volumes
 
 ```
 docker volume create starbugdata
 docker volume create starbugbackup
 ```
 
-## build docker image
-
-```
-docker build -f Dockerfile.mongodb -t starbugdb .
-```
-
-## run mongodb
-
-with persistant volumes starbugdata for data storage and starbugbackup for temporary backup storage.
-
-```
-docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb_00 -d -p 27017:27017 lrmcfarland/starbugdb
-```
-
-
-
-
-# Gunicorn UI
-
-
-## build docker image
-
-```
-docker build -f Dockerfile.obsui -t obsui-gunicorn .
-```
-
-## run gunicorn
+### Observations UI
 
 ```
 docker run --net starbugnet --name obsui-gunicorn_00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
 ```
 
-to open a bash to look the logs:
+# logging
+
+To open a bash shell to look the logs:
 
 ```
 docker exec -it obsui-gunicorn bash
-```
 
-## obsui-gunicorn docker image
+cd /opt/starbug.com/logs
 
-```
-docker build -f Dockerfile.obsui -t obsui-gunicorn .
 ```
 
 
-# Add users
+# Runtime Environment
 
-TODO use flask-login instead
+with pyenv
 
+```
+$ pyenv virtualenv 3.6.4 obsdb-3.6.4
+
+$ pyenv activate obsdb-3.6.4
+
+$ pip install -r requirements.txt
+
+```
+
+
+# Passwords
+
+## database access
+
+Dockerfile.mongodb will copy
+[conf/mongo_admin_setup.sh](https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/mongo_admin_setup.sh)
+to /docker-entrypoint-initdb.d/.  This file will create the initial
+mongodb users admin, root and starbug. It also contains their initial
+passwords as examples that should be changed when deployed to production, e.g. on persistent storage.
+
+The
+[conf/obsui_starbug.cfg](https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/obsui_starbug.cfg)
+file contains the web server configuation information and should also changed when deployed to production.
+This must match the hard coded factory input in the
+[gobsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/gobsui.py)
+for gunicorn to find it by default, but it is a command line argument
+for obsui.main() and can be set as needed for testing.
+
+## Observation UI access
+
+The observation UI access is separate from the database access.
+At this time you will need to use (user.py)[https://github.com/lrmcfarland/starbugdb/blob/master/www/user.py]
+to add users on the host.
+Until this is done, all user login attempts will fail as 'no user <user>'.
+
+Using the default admin name and admin password from above, this will add the user guest
+
+```
+
+$ ./user.py -u guest -p guest
+
+```
+If it has not already been done, this will create the starbug database on the local mongodb.
 Users passwords are stored hashed with bcrypt. The src/add_user.py
 script will install them.  At this time this is the only way to add
-users. TODO use flask-login tool
+users.
 
-```
-$ cd src
-
-$ ./add_user.py -u guest -p guest
-
-$ ./add_user.py -u lister -p changeme -w
-
-
-```
+There is no web UI to do this at this time.
 
 [To chage a password](https://docs.mongodb.com/v3.0/reference/method/db.changeUserPassword/)
 
+# mongo access
 
-# Test
+Install the mongo client on the local host, e.g. brew instal mongodb
 
-todo
+```
+$ mongo admin -u admin -p changeme --authenticationDatabase admin
+MongoDB shell version v4.0.3
 
+> show dbs;
+admin    0.000GB
+config   0.000GB
+local    0.000GB
+starbug  0.000GB
+
+> use starbug
+switched to db starbug
+
+> show tables;
+users
+
+> db.users.find()
+{ "_id" : ObjectId("5cf94d46962e154802a331ec"), "username" : "guest", "password" : BinData(0,"JDJiJDEyJHAza1I4dFgvbjh1OXMzaUpPLmZhdk8uS1M4QlBVYzVmcGFMcU1najlmL2d3ZmFSdjhhLzND"), "authenticated" : true, "active" : true, "anon" : false }
+
+> db.users.remove({'username':'guest'})
+WriteResult({ "nRemoved" : 1 })
+
+
+```
 
 
 # Backup
@@ -188,12 +174,12 @@ todo
 ```
 
 $ docker run --rm --net starbugnet --mount source=starbugdata,target=/data/db --mount source=starbugbackup,target=/opt/starbug.com/backup mongo bash -c 'mongodump --out /opt/starbug.com/backup/starbugdbdump --host starbugdb_00:27017'
-2018-08-01T06:00:15.465+0000	writing admin.system.users to 
+2018-08-01T06:00:15.465+0000	writing admin.system.users to
 2018-08-01T06:00:15.466+0000	done dumping admin.system.users (3 documents)
-2018-08-01T06:00:15.466+0000	writing admin.system.version to 
+2018-08-01T06:00:15.466+0000	writing admin.system.version to
 2018-08-01T06:00:15.467+0000	done dumping admin.system.version (2 documents)
-2018-08-01T06:00:15.467+0000	writing starbug.observations to 
-2018-08-01T06:00:15.467+0000	writing starbug.users to 
+2018-08-01T06:00:15.467+0000	writing starbug.observations to
+2018-08-01T06:00:15.467+0000	writing starbug.users to
 2018-08-01T06:00:15.468+0000	done dumping starbug.observations (43 documents)
 2018-08-01T06:00:15.469+0000	done dumping starbug.users (2 documents)
 ```
@@ -340,3 +326,8 @@ starbug-data
 
 
 ```
+
+
+# Test
+
+TODO
