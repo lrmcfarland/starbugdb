@@ -61,6 +61,6 @@ WORKDIR ${OBSUI_HOME}/www
 
 CMD [ "gunicorn", "gobsui:app", "-b", "0.0.0.0:8090", \
       "-w", "4", "--capture-output", "--log-level", "info", \
-      "--access-logfile", "/opt/starbug.com/logs/gobsui-access.log", \
-      "--error-logfile",  "/opt/starbug.com/logs/gobsui-error.log", \
+      "--access-logfile", "/opt/starbug.com/logs/obsui-access.log", \
+      "--error-logfile",  "/opt/starbug.com/logs/obsui-error.log", \
       "--forwarded-allow-ips", "*"]

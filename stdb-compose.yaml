@@ -22,7 +22,7 @@ services:
       - starbugdata:/data/db
       - starbuglogs:/opt/starbug.com/logs
 
-  starbugui:
+  obsui:
     image: obsui
     container_name: obsui_00
     restart: always
