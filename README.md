@@ -13,13 +13,17 @@ The first part is simply a mongodb server running in a container.
 The database image is build from
 [Dockerfile.mongodb](https://github.com/lrmcfarland/starbugdb/blob/master/Dockerfile.mongodb).
 
-The initial user accounts are created from
-[conf/mongo_admin_setup.sh](https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/mongo_admin_setup.sh).
-Change these values before building and do not check them in.
-
 ```
 docker build -f Dockerfile.mongodb -t starbugdb .
 ```
+
+Mongodb configuration is read at run time from
+[config/mongo_admin_setup.sh](https://github.com/lrmcfarland/starbugdb/blob/master/www/config/mongo_admin_setup.sh)
+This will initialize the admin, root and starbug accounts with their
+passwords as "changeme".
+
+TODO create change_password.py
+
 
 ## Observation UI
 

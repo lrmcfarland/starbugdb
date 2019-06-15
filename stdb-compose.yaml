@@ -8,6 +8,9 @@
 
 version: '3'
 
+networks:
+  starbugnet:
+
 services:
 
   starbugdb:
@@ -25,19 +28,21 @@ services:
   obsui:
     image: obsui
     container_name: obsui_00
+#   environment:
+#     OBSUI_FLASK_CONFIG: /opt/starbug.com/config/obsui_starbug.cfg
     restart: always
     networks:
       - starbugnet
     ports:
       - "8090:8090"
     volumes:
+      - starbugconfig:/opt/starbug.com/config
       - starbuglogs:/opt/starbug.com/logs
-
-networks:
-  starbugnet:
 
 # persistent storage
 volumes:
+  starbugconfig:
+    external: true
   starbugdata:
     external: true
   starbuglogs:

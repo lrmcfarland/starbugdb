@@ -14,7 +14,7 @@
 #
 # to build:            docker build -f Dockerfile.obsui -t obsui .
 #
-# to run:              docker run --net starbugnet --name obsui_00 --mount source=starbuglogs,target=/opt/starbug.com/logs -d -p 8090:8090 obsui
+# to run:              docker run --net starbugnet --name obsui_00 --mount source=starbugconfig,target=/opt/starbug.com/config --mount source=starbuglogs,target=/opt/starbug.com/logs -d -p 8090:8090 obsui
 #
 # to bash obsui_logs:  docker exec -it obsui_00 /bin/bash
 #

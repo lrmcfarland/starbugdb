@@ -1,6 +1,8 @@
 # mongodb
 #
 # persistent storage:  docker volume create starbugdata
+#                      docker volume create starbugbackup
+#
 #
 # to build:            docker build -f Dockerfile.mongodb -t starbugdb .
 #

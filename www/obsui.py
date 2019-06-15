@@ -47,7 +47,7 @@ login_manager = flask_login.login_manager.LoginManager()
 login_manager.login_view = 'home_blueprint.login'
 
 
-def factory(conf_flnm):
+def factory(conf_flnm=None):
     """Creates a observations ui flask
 
     Blueprints makes this much clearer
@@ -59,7 +59,21 @@ def factory(conf_flnm):
     Returns a reference to the flask app
     """
 
+    config_key = 'OBSUI_FLASK_CONFIG'
+
+    if a_config_flnm is not None:
+        config_flnm = a_config_flnm
+
+    elif os.getenv(config_key) is not None:
+        config_flnm = os.environ[config_key]
+
+    else:
+        config_flnm = 'config/obsui_starbug.cfg'
+        logging.warning('Using AAI flask test configuration.')
+
+
     obsui_app = flask.Flask(__name__)
+
     obsui_app.config.from_pyfile(conf_flnm)
 
     model.mongo.init_app(obsui_app)
@@ -96,20 +110,9 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
 
-    parser.add_argument('-f', '--config', type=str, dest='config', default=defaults['config'],
+    parser.add_argument('-c', '--config', type=str, dest='config', default=None,
                         metavar='config',
-                        help='name of config file (default: %(default)s)')
-
-    parser.add_argument('-d', '--debug', action='store_true',
-                        dest='debug', default=defaults['debug'],
-                        help='flask debug (default: %(default)s)')
-
-    parser.add_argument('--host', type=str, dest='host', default=defaults['host'],
-                        metavar='host',
-                        help='host IP to serve (default: %(default)s)')
-
-    parser.add_argument('-p', '--port', type=int, dest='port', default=defaults['port'],
-                        help='port (default: %(default)s)')
+                        help='The name of the flask config pyfile.')
 
     args = parser.parse_args()
 
@@ -119,4 +122,4 @@ if __name__ == "__main__":
 
     app = factory(args.config)
 
-    app.run(host=args.host, port=args.port, debug=args.debug)
+    app.run()
