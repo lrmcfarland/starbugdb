@@ -25,6 +25,7 @@ passwords as "changeme".
 TODO create change_password.py
 
 
+
 ## Observation UI
 
 The web UI image is built from
@@ -33,6 +34,29 @@ The web UI image is built from
 ```
 docker build -f Dockerfile.obsui -t obsui .
 ```
+
+Flask configuration is read at run time from the file in the
+OBSUI_FLASK_CONFIG environment variable.
+This should be set to a file in the starbugconfig persistent storage, e.g. /opt/starbug.com/config.
+If this is not set it defaults
+to
+[config/obsui_flask_starbug.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/config/obsui_flask_starbug.py)
+see
+[obsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/obsui.py)
+
+This sets the mongodb and AAI URIs as well as the debug status.
+
+There is also a [gunicorn](https://gunicorn.org/) wrapper for
+deployment.  Gunicorn configuration is read at build time from
+[config/obsui_gunicorn_config.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/config/obsui_gunicorn_config.py)
+This has information about which ports are being used and where the
+log files are written that needs to be coordinated with docker.  See
+[obsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/obsui.py)
+and
+[gobsui.py](https://github.com/lrmcfarland/starbugdb/blob/docker-compose-v2/www/gobsui.py)
+
+TODO read at runtime
+
 
 # Deploy
 
