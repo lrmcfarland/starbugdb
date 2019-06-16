@@ -3,20 +3,16 @@
 
 """Flask UI for the starbug observation database
 
-The default config file conf/obsui.cfg is for running inside a
+The default config file config/obsui.py is for running inside a
 container with mongod running as starbugdb_00.
 
-To test from the local command line, setup a vurtial environment:
+To Run with the AAI on the local host
 
-source py3env/bin/activate
-
-And run:
-
-./obsui.py -d -f conf/obsui_localhost.cfg
+./obsui.py -c config/obsui_flask_localhost.py
 
 with aai.starbug.com
 
-./obsui.py -d -f conf/obsui_starbug.cfg
+./obsui.py -c config/obsui_flask_starbug.py
 
 
 Reference:
@@ -31,29 +27,42 @@ import bson
 import flask
 import flask_login
 import logging
-import logging.handlers
+import os
 
 import api
 import model
 import user
 import views
 
-# =====================
-# ===== utilities =====
-# =====================
+# =================
+# ===== login =====
+# =================
 
-# TODO like model.mongo?
 login_manager = flask_login.login_manager.LoginManager()
 login_manager.login_view = 'home_blueprint.login'
 
+@login_manager.user_loader
+def load_user(user_id):
+    """load manager user loader"""
+    users = model.mongo.db['users']
+    found = users.find_one({'_id': bson.objectid.ObjectId(user_id)})
+    if found:
+        return user.User(**found)
+    return None
 
-def factory(conf_flnm=None):
+
+# ===================
+# ===== factory =====
+# ===================
+
+
+def factory(a_config_flnm=None):
     """Creates a observations ui flask
 
     Blueprints makes this much clearer
 
     Args:
-        conf_flnm (str): configuration filename
+        a_config_flnm (str): configuration filename
 
 
     Returns a reference to the flask app
@@ -68,13 +77,13 @@ def factory(conf_flnm=None):
         config_flnm = os.environ[config_key]
 
     else:
-        config_flnm = 'config/obsui_starbug.cfg'
-        logging.warning('Using AAI flask test configuration.')
+        config_flnm = 'config/obsui_flask_starbug.py'
+        logging.warning('Using Observation UI default configuration %s.', config_flnm)
 
 
     obsui_app = flask.Flask(__name__)
 
-    obsui_app.config.from_pyfile(conf_flnm)
+    obsui_app.config.from_pyfile(config_flnm)
 
     model.mongo.init_app(obsui_app)
 
@@ -86,27 +95,11 @@ def factory(conf_flnm=None):
     return obsui_app
 
 
-@login_manager.user_loader
-def load_user(user_id):
-    """load manager user loader"""
-    users = model.mongo.db['users']
-    found = users.find_one({'_id': bson.objectid.ObjectId(user_id)})
-    if found:
-        return user.User(**found)
-    return None
-
-
 # ================
 # ===== main =====
 # ================
 
 if __name__ == "__main__":
-
-    defaults = {'config': 'conf/obsui_starbug.cfg',
-                'debug': False,
-                'host':'0.0.0.0',
-                'port': 8090}
-
 
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
 

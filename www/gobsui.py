@@ -8,6 +8,6 @@ gunicorn needs app to be instantiated outside of main
 
 import obsui
 
-app = obsui.factory('conf/obsui_starbug.cfg')
+application = obsui.factory()
 
 

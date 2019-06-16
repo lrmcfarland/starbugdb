@@ -10,7 +10,7 @@
 #
 # This will add auth with the admin, root and starbug users in
 # /docker-entrypoint-initdb.d/mongo_admin_setup.sh.  Edit passwords
-# there and and the secret in ./conf/mongo_admin_setup.sh and
+# there and and the secret in ./config/mongo_admin_setup.sh and
 # obsui.cfg
 #
 # to add users: cd www; ./users.py -h
@@ -38,6 +38,6 @@ FROM mongo
 LABEL maintainer "lrm@starbug.com"
 LABEL service "Starbug.com mongo database"
 
-COPY www/conf/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
+COPY www/config/mongo_admin_setup.sh /docker-entrypoint-initdb.d
 
 CMD ["mongod", "--smallfiles"]
