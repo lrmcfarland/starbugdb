@@ -52,11 +52,11 @@ class User(object):
 
 
     def __str__(self):
-        return '({_id}, {username}, ********, {authenticated}, {active}, {anon})'.format(**self.__dict__)
+        return r'{{ "username":{username}, "password":{password}, "authenticated":{authenticated}, "active":{active}, "anon":{anon} }}'.format(**self.__dict__)
 
 
     def __repr__(self):
-        return r'{{ {username}, "password": {password}, "authenticated":{authenticated}, "active":{active}, "anon":{anon} }}'.format(**self.__dict__)
+        return '({_id}, {username}, ********, {authenticated}, {active}, {anon})'.format(**self.__dict__)
 
 
     def get_id(self):
@@ -95,13 +95,22 @@ class User(object):
 
 if __name__ == '__main__':
 
+    actions = ('list', 'add')
+
     defaults = {'host':'localhost',
                 'port': 27017,
                 'admin_name': 'admin',
-                'admin_password': 'changeme'
+                'admin_password': 'changeme',
+                'action': actions[0]
     }
 
     parser = argparse.ArgumentParser(description='add users with bcrypt-ed passwords')
+
+    parser.add_argument('-a', '--action',
+                        action='store', dest='action',
+                        choices=actions,
+                        default=defaults['action'],
+                        help='actions %s' % (actions,))
 
     parser.add_argument('--host', type=str, dest='host', default=defaults['host'],
                         metavar='host',
@@ -116,10 +125,10 @@ if __name__ == '__main__':
     parser.add_argument('--admin-password', type=str, dest='admin_password',
                         default=defaults['admin_password'], metavar='password', help='admin password  (default: %(default)s)')
 
-    parser.add_argument('-u', '--username', type=str, dest='username', required=True,
+    parser.add_argument('-u', '--username', type=str, dest='username', default=None,
                         metavar='username', help='user username')
 
-    parser.add_argument('-p', '--password', type=str, dest='password', required=True,
+    parser.add_argument('-p', '--password', type=str, dest='password', default=None,
                         metavar='password', help='user password')
 
 
@@ -127,34 +136,47 @@ if __name__ == '__main__':
 
     # TODO rm user, deactiveate, anon?
 
-    # ----- add user -----
+    client = pymongo.MongoClient(args.host, args.port)
 
-    try:
+    client.admin.authenticate(args.admin_name, args.admin_password)
 
-        client = pymongo.MongoClient(args.host, args.port)
+    users = client['starbug']['users']
 
-        client.admin.authenticate(args.admin_name, args.admin_password)
+    # action
 
-        users = client['starbug']['users']
-
-        found = users.find_one({'username': args.username})
-        if found:
-            a_user = User(**found)
-            raise Error('user {} already exists'.format(a_user))
-
-        a_user = User(username=args.username, password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()))
-
-        users.insert_one(a_user.for_insert())
+    if args.action == 'list':
 
         print('users')
         for user in users.find():
             a_user = User(**user)
             print('User: {}'.format(a_user))
-            print('User: {}'.format(repr(a_user)))
 
-    except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+    elif args.action == 'add':
 
-        print('Error: {}'.format(err))
+        if args.username is None:
+            raise Error('add username can not be None')
+
+        if args.password is None:
+            raise Error('add password can not be None')
+
+        try:
+
+            found = users.find_one({'username': args.username})
+            if found:
+                a_user = User(**found)
+                raise Error('user {} already exists'.format(a_user))
+
+            a_user = User(username=args.username, password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()))
+
+            users.insert_one(a_user.for_insert())
+
+        except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+
+            print('Error: {}'.format(err))
+
+    else:
+        print('unsupported action %s', args.action)
+
 
 
 print('done')
