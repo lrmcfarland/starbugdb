@@ -9,6 +9,7 @@ __main__ adds users to mongodb with bcrypt hashed passwords
 
 import argparse
 import bcrypt
+import getpass
 import json
 import pymongo
 
@@ -95,13 +96,14 @@ class User(object):
 
 if __name__ == '__main__':
 
-    actions = ('list', 'add', 'remove')
+    actions = ('list', 'add', 'change', 'remove')
 
     defaults = {'host':'localhost',
                 'port': 27017,
                 'admin_name': 'admin',
                 'admin_password': 'changeme',
-                'action': actions[0]
+                'action': actions[0],
+                'database':'starbug'
     }
 
     parser = argparse.ArgumentParser(description='add users with bcrypt-ed passwords')
@@ -125,6 +127,9 @@ if __name__ == '__main__':
     parser.add_argument('--admin-password', type=str, dest='admin_password',
                         default=defaults['admin_password'], metavar='password', help='admin password  (default: %(default)s)')
 
+    parser.add_argument('-d', '--database', type=str, dest='database', default=defaults['database'],
+                        metavar='database', help='user database')
+
     parser.add_argument('-u', '--username', type=str, dest='username', default=None,
                         metavar='username', help='user username')
 
@@ -134,13 +139,20 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # TODO rm user, deactiveate, anon?
+    # TODO deactiveate, anon?
 
-    client = pymongo.MongoClient(args.host, args.port)
+    client = pymongo.MongoClient(args.host, args.port) # TODO authSource=)
+
+    if args.database not in client.list_database_names():
+        raise Error('database {} not found'.format(args.database))
 
     client.admin.authenticate(args.admin_name, args.admin_password)
 
-    users = client['starbug']['users']
+    if args.database == 'admin':
+
+        users = client.admin.system.users
+    else:
+        users = client[args.database].users
 
     # action
 
@@ -148,8 +160,7 @@ if __name__ == '__main__':
 
         print('users')
         for user in users.find():
-            a_user = User(**user)
-            print('User: {}'.format(a_user))
+            print('User: {}'.format(user))
 
 
     elif args.action == 'add':
@@ -170,6 +181,27 @@ if __name__ == '__main__':
             a_user = User(username=args.username, password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()))
 
             users.insert_one(a_user.for_insert())
+
+        except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+
+            print('Error: {}'.format(err))
+
+
+    elif args.action == 'change':
+
+        if args.username is None:
+            raise Error('change username can not be None')
+
+        try:
+
+            new_pass = getpass.getpass()
+
+            print('new pass {}', new_pass)
+
+            # TODO no such method exists. result = client.starbug.changeUserPassword(args.username, new_pass)
+
+            # print('change result {}', result) # TODO rm
+
 
         except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
 
