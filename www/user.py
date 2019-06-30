@@ -95,7 +95,7 @@ class User(object):
 
 if __name__ == '__main__':
 
-    actions = ('list', 'add')
+    actions = ('list', 'add', 'remove')
 
     defaults = {'host':'localhost',
                 'port': 27017,
@@ -151,6 +151,7 @@ if __name__ == '__main__':
             a_user = User(**user)
             print('User: {}'.format(a_user))
 
+
     elif args.action == 'add':
 
         if args.username is None:
@@ -173,6 +174,23 @@ if __name__ == '__main__':
         except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
 
             print('Error: {}'.format(err))
+
+
+    elif args.action == 'remove':
+
+        if args.username is None:
+            raise Error('remove username can not be None')
+
+        try:
+
+            found = users.find_one_and_delete({'username': args.username})
+            if not found:
+                raise Error('user {} not found'.format(args.username))
+
+        except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+
+            print('Error: {}'.format(err))
+
 
     else:
         print('unsupported action %s', args.action)
