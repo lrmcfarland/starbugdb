@@ -100,9 +100,10 @@ if __name__ == '__main__':
 
     defaults = {'host':'localhost',
                 'port': 27017,
+                'action': actions[0],
                 'admin_name': 'admin',
                 'admin_password': 'changeme',
-                'action': actions[0],
+                'admin_database':'admin',
                 'database':'starbug'
     }
 
@@ -127,6 +128,9 @@ if __name__ == '__main__':
     parser.add_argument('--admin-password', type=str, dest='admin_password',
                         default=defaults['admin_password'], metavar='password', help='admin password  (default: %(default)s)')
 
+    parser.add_argument('--admin-database', type=str, dest='admin_database', default=defaults['admin_database'],
+                        metavar='database', help='user database')
+
     parser.add_argument('-d', '--database', type=str, dest='database', default=defaults['database'],
                         metavar='database', help='user database')
 
@@ -139,14 +143,18 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
-    # TODO deactiveate, anon?
 
-    client = pymongo.MongoClient(args.host, args.port) # TODO authSource=)
+    # ------------------------
+    # ----- Mongo Client -----
+    # ------------------------
 
-    if args.database not in client.list_database_names():
-        raise Error('database {} not found'.format(args.database))
 
-    client.admin.authenticate(args.admin_name, args.admin_password)
+    client = pymongo.MongoClient(host=args.host,
+                                 port=args.port,
+                                 authSource=args.admin_database)
+
+    client[args.admin_database].authenticate(args.admin_name, args.admin_password)
+
 
     if args.database == 'admin':
 
@@ -157,6 +165,8 @@ if __name__ == '__main__':
     # action
 
     if args.action == 'list':
+
+        print('databases {}'.format(client.list_database_names()))
 
         print('users')
         for user in users.find():
