@@ -208,8 +208,13 @@ if __name__ == '__main__':
 
             print('new pass {}', new_pass)
 
-            # TODO no such method exists. result = client.starbug.changeUserPassword(args.username, new_pass)
+            db = client[args.database]
 
+            # raise Error('not implemented') # TODO
+
+            # print('db {}'.format(dir(db))) # TODO rm
+            # result = db.updateUser(args.username, {"pwd": new_pass})
+            # result = db.changeUserPassword(args.username, new_pass)
             # print('change result {}', result) # TODO rm
 
 
