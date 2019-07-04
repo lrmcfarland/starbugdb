@@ -36,11 +36,14 @@ services:
     ports:
       - "8090:8090"
     volumes:
+      - starbugbackup:/opt/starbug.com/backup
       - starbugconfig:/opt/starbug.com/config
       - starbuglogs:/opt/starbug.com/logs
 
 # persistent storage
 volumes:
+  starbugbackup:
+    external: true
   starbugconfig:
     external: true
   starbugdata:
