@@ -22,18 +22,17 @@ Mongodb configuration is read at run time from
 This will initialize the admin, root and starbug accounts with their
 passwords as "changeme".
 
-TODO create change_password.py
-
-
-
 ## Observation UI
 
-The web UI image is built from
+The web Observation UI image is built from
 [Dockerfile.obsui](https://github.com/lrmcfarland/starbugdb/blob/master/Dockerfile.obsui).
 
 ```
 docker build -f Dockerfile.obsui -t obsui .
 ```
+
+
+## Configuration
 
 Flask configuration is read at run time from the file in the
 OBSUI_FLASK_CONFIG environment variable.
@@ -43,7 +42,6 @@ to
 [config/obsui_flask_starbug.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/config/obsui_flask_starbug.py)
 see
 [obsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/obsui.py)
-
 This sets the mongodb and AAI URIs as well as the debug status.
 
 There is also a [gunicorn](https://gunicorn.org/) wrapper for
@@ -55,10 +53,18 @@ log files are written that needs to be coordinated with docker.  See
 and
 [gobsui.py](https://github.com/lrmcfarland/starbugdb/blob/docker-compose-v2/www/gobsui.py)
 
-TODO read at runtime
 
 
 # Deploy
+
+The database and UI can be deployed with docker compose.
+
+Create volumes for persistent storage if they do not already exist.
+
+```
+docker volume create starbugdata
+docker volume create starbugbackup
+```
 
 ## docker compose
 
@@ -84,14 +90,9 @@ To deploy with out docker compose
 docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb_00 -d -p 27017:27017 lrmcfarland/starbugdb
 ```
 
-This will create the starbugdata and starbugbackup volumes
-
-```
-docker volume create starbugdata
-docker volume create starbugbackup
-```
-
 ### Observations UI
+
+The database is accessible through the Observation UI built on flask and served via gunicorn.
 
 ```
 docker run --net starbugnet --name obsui-gunicorn_00 --mount source=aai-logs,target=/opt/starbug.com/logs/gunicorn -d -p 8090:8090 obsui-gunicorn
@@ -111,7 +112,7 @@ cd /opt/starbug.com/logs
 
 # Runtime Environment
 
-with pyenv
+To create a test environment with pyenv, in this example with python 3.6.4
 
 ```
 $ pyenv virtualenv 3.6.4 obsdb-3.6.4
@@ -123,19 +124,37 @@ $ pip install -r requirements.txt
 ```
 
 
-# Passwords
+# Database access
 
-## database access
-
+Mongodb must be started with the --auth parameter for this to work
+(see
+[Dockerfile.mongodb](https://github.com/lrmcfarland/starbugdb/blob/docker-compose-v4/Dockerfile.mongodb)).
 Dockerfile.mongodb will copy
 [conf/mongo_admin_setup.sh](https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/mongo_admin_setup.sh)
 to /docker-entrypoint-initdb.d/.  This file will create the initial
-mongodb users admin, root and starbug. It also contains their initial
-passwords as examples that should be changed when deployed to production, e.g. on persistent storage.
+mongodb users admin, root and starbug, all with the password
+"changeme".
+
+## [To chage a password](https://docs.mongodb.com/v3.0/reference/method/db.changeUserPassword/)
+
+```
+$ mongo -u admin -p changeme --authenticationDatabase admin
+MongoDB shell version v4.0.3
+connecting to: mongodb://127.0.0.1:27017
+Implicit session: session { "id" : UUID("1d4ebfac-984c-4917-810f-73e06920f195") }
+MongoDB server version: 4.0.10
+> use admin
+switched to db admin
+> db.changeUserPassword("admin", "changeme2")
+> exit
+bye
+
+```
+
 
 The
 [conf/obsui_starbug.cfg](https://github.com/lrmcfarland/starbugdb/blob/master/www/conf/obsui_starbug.cfg)
-file contains the web server configuation information and should also changed when deployed to production.
+file contains the web server configuation information.
 This must match the hard coded factory input in the
 [gobsui.py](https://github.com/lrmcfarland/starbugdb/blob/master/www/gobsui.py)
 for gunicorn to find it by default, but it is a command line argument
@@ -143,7 +162,7 @@ for obsui.main() and can be set as needed for testing.
 
 ## Observation UI access
 
-The observation UI access is separate from the database access.
+The Observation database access is separate from the admin database access.
 At this time you will need to use (user.py)[https://github.com/lrmcfarland/starbugdb/blob/master/www/user.py]
 to add users on the host.
 Until this is done, all user login attempts will fail as 'no user <user>'.
@@ -152,17 +171,14 @@ Using the default admin name and admin password from above, this will add the us
 
 ```
 
-$ ./user.py -u guest -p guest
+/user.py --admin-name starbug --admin-password changeme --admin-database starbug -a add -u guest -p guest
 
 ```
-If it has not already been done, this will create the starbug database on the local mongodb.
+If it has not already been done, this will create the starbug database.
 Users passwords are stored hashed with bcrypt. The src/add_user.py
-script will install them.  At this time this is the only way to add
-users.
+script will install them. There is no web UI to do this at this time.
 
-There is no web UI to do this at this time.
 
-[To chage a password](https://docs.mongodb.com/v3.0/reference/method/db.changeUserPassword/)
 
 # mongo access
 
@@ -250,6 +266,13 @@ $ mongorestore --drop dump
 2017-12-27T20:18:33.286-0800	done
 
 ```
+
+
+
+
+
+
+
 
 But the database is open:
 
