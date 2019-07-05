@@ -77,7 +77,7 @@ def factory(a_config_flnm=None):
         config_flnm = os.environ[config_key]
 
     else:
-        config_flnm = 'config/obsui_flask_starbug.py'
+        config_flnm = 'config/obsui-flask-testing-config.py'
         logging.warning('Using Observation UI default configuration %s.', config_flnm)
 
 
