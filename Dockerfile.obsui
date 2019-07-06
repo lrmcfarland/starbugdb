@@ -1,4 +1,4 @@
-# This is the flask interface to the starbug.com mongodb database
+# This is the flask interface to the starbug.com observation database
 #
 # This will build the flask observation interface served by gunicorn
 # for use with nginx as a reverse proxy.
@@ -8,19 +8,23 @@
 # see Dockerfile.mongodb for details about how to set that up
 #
 # one time setup
-# persistent storage:  docker volume create starbuglogs
+#
 # create network:      docker network create starbugnet
 #
+# persistent storage:  docker volume create starbugconfig
+#                      docker volume create starbuglogs
 #
-# to build:            docker build -f Dockerfile.obsui -t obsui-gunicorn .
 #
-# to run:              docker run --net starbugnet --name obsui-gunicorn-00 --mount source=starbuglogs,target=/opt/starbug.com/logs -d -p 8090:8090 obsui-gunicorn
+# to build:            docker build -f Dockerfile.obsui -t obsui .
 #
-# to bash obsui-logs:  docker run -it --rm --mount source=starbuglogs,target=/opt/starbug.com/logs --user root --entrypoint /bin/bash obsui-gunicorn
+# to run:              docker run --net starbugnet --name obsui_00 --mount source=starbugconfig,target=/opt/starbug.com/config --mount source=starbuglogs,target=/opt/starbug.com/logs -d -e OBSUI_FLASK_CONFIG='/opt/starbug.com/config/obsui_flask_starbug.py' -p 8090:8090 obsui
+# TODO port argument here must match www/config/obsui_gunicorn_config.py
 #
-# to stop:                   docker stop obsui-gunicorn-00
-# to delete container:       docker rm obsui-gunicorn-00
-# to delete image:           docker rmi obsui-gunicorn
+# to bash obsui_logs:  docker exec -it obsui_00 /bin/bash
+#
+# to stop:                   docker stop obsui_00
+# to delete container:       docker rm obsui_00
+# to delete image:           docker rmi obsui
 
 FROM centos
 
@@ -40,7 +44,7 @@ RUN pip install --upgrade pip && pip install -r /tmp/requirements.txt
 # -------------------------------
 
 ENV STARBUG_HOME="/opt/starbug.com/" \
-    OBSUI_HOME="/opt/starbug.com/ObsUI" \
+    OBSUI_HOME="/opt/starbug.com/oui" \
     STARBUG_USER="starbug" \
     STARBUG_GRP="starbug"
 
@@ -59,8 +63,7 @@ COPY www www
 
 WORKDIR ${OBSUI_HOME}/www
 
-CMD [ "gunicorn", "gobsui:app", "-b", "0.0.0.0:8090", \
-      "-w", "4", "--capture-output", "--log-level", "info", \
-      "--access-logfile", "/opt/starbug.com/logs/gobsui-access.log", \
-      "--error-logfile",  "/opt/starbug.com/logs/gobsui-error.log", \
-      "--forwarded-allow-ips", "*"]
+
+CMD [ "./bin/obsui-gunicorn.sh", "-g", "config/obsui_gunicorn_config.py"]
+
+# TODO this config is copied at build time

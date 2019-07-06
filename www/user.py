@@ -9,6 +9,7 @@ __main__ adds users to mongodb with bcrypt hashed passwords
 
 import argparse
 import bcrypt
+import getpass
 import json
 import pymongo
 
@@ -52,11 +53,11 @@ class User(object):
 
 
     def __str__(self):
-        return '({_id}, {username}, ********, {authenticated}, {active}, {anon})'.format(**self.__dict__)
+        return r'{{ "username":{username}, "password":{password}, "authenticated":{authenticated}, "active":{active}, "anon":{anon} }}'.format(**self.__dict__)
 
 
     def __repr__(self):
-        return r'{{ {username}, "password": {password}, "authenticated":{authenticated}, "active":{active}, "anon":{anon} }}'.format(**self.__dict__)
+        return '({_id}, {username}, ********, {authenticated}, {active}, {anon})'.format(**self.__dict__)
 
 
     def get_id(self):
@@ -95,13 +96,24 @@ class User(object):
 
 if __name__ == '__main__':
 
+    actions = ('list', 'add', 'change', 'remove')
+
     defaults = {'host':'localhost',
                 'port': 27017,
+                'action': actions[0],
                 'admin_name': 'admin',
-                'admin_password': 'changeme'
+                'admin_password': 'changeme',
+                'admin_database':'admin',
+                'database':'starbug'
     }
 
     parser = argparse.ArgumentParser(description='add users with bcrypt-ed passwords')
+
+    parser.add_argument('-a', '--action',
+                        action='store', dest='action',
+                        choices=actions,
+                        default=defaults['action'],
+                        help='actions %s' % (actions,))
 
     parser.add_argument('--host', type=str, dest='host', default=defaults['host'],
                         metavar='host',
@@ -116,45 +128,120 @@ if __name__ == '__main__':
     parser.add_argument('--admin-password', type=str, dest='admin_password',
                         default=defaults['admin_password'], metavar='password', help='admin password  (default: %(default)s)')
 
-    parser.add_argument('-u', '--username', type=str, dest='username', required=True,
+    parser.add_argument('--admin-database', type=str, dest='admin_database', default=defaults['admin_database'],
+                        metavar='database', help='admin database (default: %(default)s)')
+
+    parser.add_argument('-d', '--database', type=str, dest='database', default=defaults['database'],
+                        metavar='database', help='user database (default: %(default)s)')
+
+    parser.add_argument('-u', '--username', type=str, dest='username', default=None,
                         metavar='username', help='user username')
 
-    parser.add_argument('-p', '--password', type=str, dest='password', required=True,
+    parser.add_argument('-p', '--password', type=str, dest='password', default=None,
                         metavar='password', help='user password')
 
 
     args = parser.parse_args()
 
-    # TODO rm user, deactiveate, anon?
 
-    # ----- add user -----
-
-    try:
-
-        client = pymongo.MongoClient(args.host, args.port)
-
-        client.admin.authenticate(args.admin_name, args.admin_password)
-
-        users = client['starbug']['users']
-
-        found = users.find_one({'username': args.username})
-        if found:
-            a_user = User(**found)
-            raise Error('user {} already exists'.format(a_user))
-
-        a_user = User(username=args.username, password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()))
-
-        users.insert(a_user.for_insert())
-
-    except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
-
-        print('{}'.format(err))
+    # ------------------------
+    # ----- Mongo Client -----
+    # ------------------------
 
 
-    print('users')
-    for user in users.find():
-        a_user = User(**user)
-        print('User: {}'.format(a_user))
-        print('User: {}'.format(repr(a_user)))
+    client = pymongo.MongoClient(host=args.host,
+                                 port=args.port,
+                                 authSource=args.admin_database)
+
+    client[args.admin_database].authenticate(args.admin_name, args.admin_password)
+
+
+    if args.database == 'admin':
+
+        users = client.admin.system.users
+    else:
+        users = client[args.database].users
+
+    # action
+
+    if args.action == 'list':
+
+        print('databases {}'.format(client.list_database_names()))
+
+        print('users')
+        for user in users.find():
+            print('User: {}'.format(user))
+
+
+    elif args.action == 'add':
+
+        if args.username is None:
+            raise Error('add username can not be None')
+
+        if args.password is None:
+            raise Error('add password can not be None')
+
+        try:
+
+            found = users.find_one({'username': args.username})
+            if found:
+                a_user = User(**found)
+                raise Error('user {} already exists'.format(a_user))
+
+            a_user = User(username=args.username, password = bcrypt.hashpw(args.password.encode('utf-8'), bcrypt.gensalt()))
+
+            users.insert_one(a_user.for_insert())
+
+        except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+
+            print('Error: {}'.format(err))
+
+
+    elif args.action == 'change':
+
+        if args.username is None:
+            raise Error('change username can not be None')
+
+        try:
+
+            new_pass = getpass.getpass()
+
+            print('new pass {}', new_pass)
+
+            db = client[args.database]
+
+            # raise Error('not implemented') # TODO
+
+            # print('db {}'.format(dir(db))) # TODO rm
+            # result = db.updateUser(args.username, {"pwd": new_pass})
+            # result = db.changeUserPassword(args.username, new_pass)
+            # print('change result {}', result) # TODO rm
+
+
+        except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+
+            print('Error: {}'.format(err))
+
+
+    elif args.action == 'remove':
+
+        if args.username is None:
+            raise Error('remove username can not be None')
+
+        try:
+
+            found = users.find_one_and_delete({'username': args.username})
+            if not found:
+                raise Error('user {} not found'.format(args.username))
+
+        except (Error, pymongo.errors.OperationFailure, pymongo.errors.ServerSelectionTimeoutError) as err:
+
+            print('Error: {}'.format(err))
+
+
+    else:
+        print('unsupported action %s', args.action)
+
+
 
 print('done')

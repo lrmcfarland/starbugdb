@@ -1,21 +1,24 @@
 # mongodb
 #
 # persistent storage:  docker volume create starbugdata
+#                      docker volume create starbugbackup
+#
 #
 # to build:            docker build -f Dockerfile.mongodb -t starbugdb .
 #
-# to run:              docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb-00 -d -p 27017:27017 lrmcfarland/starbugdb
+# to run:              docker run --net starbugnet --mount source=starbugdata,target=/data/db  --mount source=starbugbackup,target=/opt/starbug.com/backup --name starbugdb_00 -d -p 27017:27017 starbugdb
 #
 # This will add auth with the admin, root and starbug users in
 # /docker-entrypoint-initdb.d/mongo_admin_setup.sh.  Edit passwords
-# there and and the secret in ./conf/mongo_admin_setup.sh and
-# obs-flask.cfg
+# there and and the secret in ./config/mongo_admin_setup.sh and
+# obsui.cfg
 #
 # to add users: cd www; ./users.py -h
 #
-# docker bash  shell:  docker exec -it starbugdb-00 bash
+# docker bash  shell:  docker exec -it starbugdb_00 bash
+#
 # after auth:
-# docker mongo shell:  docker exec -it starbugdb-00 mongo admin -u admin -p changeme --authenticationDatabase admin
+# docker mongo shell:  docker exec -it starbugdb_00 mongo admin -u admin -p changeme --authenticationDatabase admin
 #
 # with port 27017 exposed this is also accessible from the host with the mongo client
 #
@@ -35,6 +38,6 @@ FROM mongo
 LABEL maintainer "lrm@starbug.com"
 LABEL service "Starbug.com mongo database"
 
-COPY www/conf/mongo_admin_setup.sh /docker-entrypoint-initdb.d/
+COPY www/config/mongo_admin_setup.sh /docker-entrypoint-initdb.d
 
-CMD ["mongod", "--smallfiles"]
+CMD ["mongod", "--auth", "--smallfiles"]

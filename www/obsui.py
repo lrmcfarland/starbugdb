@@ -3,16 +3,16 @@
 
 """Flask UI for the starbug observation database
 
-The default config file conf/obs-flask.cfg is for running inside a
-container with mongod running as starbugdb-00.
+The default config file config/obsui.py is for running inside a
+container with mongod running as starbugdb_00.
 
-To test from the local command line, setup a vurtial environment:
+To Run with the AAI on the local host
 
-source py3env/bin/activate
+./obsui.py -c config/obsui_flask_localhost.py
 
-And run:
+with aai.starbug.com
 
-./obsui.py -p 8888 -d -f conf/obs-flask-localhost.cfg
+./obsui.py -c config/obsui_flask_starbug.py
 
 
 Reference:
@@ -27,46 +27,19 @@ import bson
 import flask
 import flask_login
 import logging
-import logging.handlers
+import os
 
 import api
 import model
 import user
 import views
 
-# =====================
-# ===== utilities =====
-# =====================
+# =================
+# ===== login =====
+# =================
 
-# TODO like model.mongo?
 login_manager = flask_login.login_manager.LoginManager()
 login_manager.login_view = 'home_blueprint.login'
-
-
-def factory(conf_flnm):
-    """Creates a observations ui flask
-
-    Blueprints makes this much clearer
-
-    Args:
-        conf_flnm (str): configuration filename
-
-
-    Returns a reference to the flask app
-    """
-
-    obsui_app = flask.Flask(__name__)
-    obsui_app.config.from_pyfile(conf_flnm)
-
-    model.mongo.init_app(obsui_app)
-
-    obsui_app.register_blueprint(views.home_page)
-    obsui_app.register_blueprint(api.api)
-
-    login_manager.init_app(obsui_app)
-
-    return obsui_app
-
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -78,34 +51,61 @@ def load_user(user_id):
     return None
 
 
+# ===================
+# ===== factory =====
+# ===================
+
+
+def factory(a_config_flnm=None):
+    """Creates a observations ui flask
+
+    Blueprints makes this much clearer
+
+    Args:
+        a_config_flnm (str): configuration filename
+
+
+    Returns a reference to the flask app
+    """
+
+    config_key = 'OBSUI_FLASK_CONFIG'
+
+    if a_config_flnm is not None:
+        config_flnm = a_config_flnm
+
+    elif os.getenv(config_key) is not None:
+        config_flnm = os.environ[config_key]
+
+    else:
+        config_flnm = 'config/obsui-flask-testing-config.py'
+        logging.warning('Using Observation UI default configuration %s.', config_flnm)
+
+
+    obsui_app = flask.Flask(__name__)
+
+    obsui_app.config.from_pyfile(config_flnm)
+
+    model.mongo.init_app(obsui_app)
+
+    obsui_app.register_blueprint(views.home_page)
+    obsui_app.register_blueprint(api.api)
+
+    login_manager.init_app(obsui_app)
+
+    return obsui_app
+
+
 # ================
 # ===== main =====
 # ================
 
 if __name__ == "__main__":
 
-    defaults = {'config': 'conf/obs-flask.cfg',
-                'debug': False,
-                'host':'0.0.0.0',
-                'port': 8080}
-
-
     parser = argparse.ArgumentParser(description='starbug observations database flask server')
 
-    parser.add_argument('-f', '--config', type=str, dest='config', default=defaults['config'],
+    parser.add_argument('-c', '--config', type=str, dest='config', default=None,
                         metavar='config',
-                        help='name of config file (default: %(default)s)')
-
-    parser.add_argument('-d', '--debug', action='store_true',
-                        dest='debug', default=defaults['debug'],
-                        help='flask debug (default: %(default)s)')
-
-    parser.add_argument('--host', type=str, dest='host', default=defaults['host'],
-                        metavar='host',
-                        help='host IP to serve (default: %(default)s)')
-
-    parser.add_argument('-p', '--port', type=int, dest='port', default=defaults['port'],
-                        help='port (default: %(default)s)')
+                        help='The name of the flask config pyfile.')
 
     args = parser.parse_args()
 
@@ -115,4 +115,4 @@ if __name__ == "__main__":
 
     app = factory(args.config)
 
-    app.run(host=args.host, port=args.port, debug=args.debug)
+    app.run()

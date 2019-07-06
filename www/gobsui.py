@@ -8,6 +8,6 @@ gunicorn needs app to be instantiated outside of main
 
 import obsui
 
-app = obsui.factory('conf/obs-flask.cfg')
+application = obsui.factory()
 
 
