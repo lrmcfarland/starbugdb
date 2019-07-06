@@ -129,10 +129,10 @@ if __name__ == '__main__':
                         default=defaults['admin_password'], metavar='password', help='admin password  (default: %(default)s)')
 
     parser.add_argument('--admin-database', type=str, dest='admin_database', default=defaults['admin_database'],
-                        metavar='database', help='user database')
+                        metavar='database', help='admin database (default: %(default)s)')
 
     parser.add_argument('-d', '--database', type=str, dest='database', default=defaults['database'],
-                        metavar='database', help='user database')
+                        metavar='database', help='user database (default: %(default)s)')
 
     parser.add_argument('-u', '--username', type=str, dest='username', default=None,
                         metavar='username', help='user username')
